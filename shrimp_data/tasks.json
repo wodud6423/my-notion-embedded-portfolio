@@ -1,0 +1,935 @@
+{
+  "tasks": [
+    {
+      "id": "46119b88-dace-481f-b05c-2d3168b88f20",
+      "name": "[Phase 3] shiki 패키지 설치 및 TechGrid 컴포넌트 생성",
+      "description": "코드 블록 하이라이팅을 위한 shiki 패키지를 설치하고, 기술 카드 목록을 그리드로 렌더링하는 TechGrid 컴포넌트를 생성한다. TechGrid는 홈·카테고리·검색 결과 전 페이지에서 재사용되는 순수 렌더링 컴포넌트다.",
+      "notes": "shiki는 서버 컴포넌트에서만 실행되므로 클라이언트 번들에 포함되지 않음. TechGrid 자체는 서버/클라이언트 어디서나 사용 가능한 순수 렌더링 컴포넌트로 유지.",
+      "status": "pending",
+      "dependencies": [],
+      "createdAt": "2026-05-07T13:44:29.367Z",
+      "updatedAt": "2026-05-07T13:44:29.367Z",
+      "relatedFiles": [
+        {
+          "path": "package.json",
+          "type": "TO_MODIFY",
+          "description": "shiki 의존성 추가"
+        },
+        {
+          "path": "components/tech/tech-grid.tsx",
+          "type": "CREATE",
+          "description": "신규 TechGrid 컴포넌트"
+        },
+        {
+          "path": "components/tech/tech-card.tsx",
+          "type": "REFERENCE",
+          "description": "TechCard 재사용",
+          "lineStart": 1,
+          "lineEnd": 68
+        },
+        {
+          "path": "types/index.ts",
+          "type": "REFERENCE",
+          "description": "TechStack 타입",
+          "lineStart": 59,
+          "lineEnd": 68
+        }
+      ],
+      "implementationGuide": "1. npm install shiki 실행\n2. components/tech/tech-grid.tsx 생성:\n   - props: { items: TechStack[], className?: string }\n   - 서버/클라이언트 구분 없음 ('use client' 없음)\n   - items.length > 0: grid gap-4 sm:grid-cols-2 lg:grid-cols-3 + TechCard 렌더링\n   - items.length === 0: Empty State UI ('등록된 기술 스택이 없습니다.' 메시지)\n   - TechCard import: @/components/tech/tech-card\n   - TechStack import: @/types",
+      "verificationCriteria": "npm run build 시 TypeScript 오류 없음. TechGrid에 items 배열 전달 시 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 그리드로 TechCard 렌더링. items 빈 배열 전달 시 Empty State 메시지 표시.",
+      "analysisResult": "ROADMAP.md Phase 3 핵심 기능 구현. Next.js 16.2.4 App Router + React 19 + @notionhq/client v5 + Tailwind CSS v4 + Zustand v5 + shadcn/ui(radix-nova) 기반. 히어로 섹션 유지 + Notion 기술 카드 그리드 추가, shiki 코드 하이라이팅 적용. 모든 파일은 @/* 절대 경로 사용, any 타입 금지, 서버 컴포넌트 기본 원칙 준수."
+    },
+    {
+      "id": "244e3542-882b-449e-81aa-a9d4dfbd8753",
+      "name": "[Phase 3] HomeTechList 클라이언트 컴포넌트 생성",
+      "description": "홈 페이지에서 Zustand 필터 상태를 구독하고 필터 변경 시 /api/tech 재요청을 담당하는 클라이언트 컴포넌트를 생성한다. 서버에서 fetch한 initialItems를 초기값으로 받아 TechGrid에 전달한다.",
+      "notes": "클라이언트 컴포넌트이므로 fetch 시 baseUrl 없이 상대 경로 '/api/tech?...' 사용 가능. 서버 컴포넌트의 fetch 패턴(NEXT_PUBLIC_BASE_URL)과 다름. useFilterStore는 @/store/filter-store에서 import.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "46119b88-dace-481f-b05c-2d3168b88f20"
+        }
+      ],
+      "createdAt": "2026-05-07T13:44:29.367Z",
+      "updatedAt": "2026-05-07T13:44:29.367Z",
+      "relatedFiles": [
+        {
+          "path": "components/tech/home-tech-list.tsx",
+          "type": "CREATE",
+          "description": "신규 HomeTechList 클라이언트 컴포넌트"
+        },
+        {
+          "path": "components/tech/tech-grid.tsx",
+          "type": "DEPENDENCY",
+          "description": "TechGrid 재사용"
+        },
+        {
+          "path": "store/filter-store.ts",
+          "type": "REFERENCE",
+          "description": "useFilterStore - category, tags, difficulty 구독",
+          "lineStart": 1,
+          "lineEnd": 47
+        },
+        {
+          "path": "types/index.ts",
+          "type": "REFERENCE",
+          "description": "TechStack, TechListResponse 타입",
+          "lineStart": 59,
+          "lineEnd": 90
+        }
+      ],
+      "implementationGuide": "components/tech/home-tech-list.tsx 생성:\n- 파일 최상단: 'use client'\n- props: { initialItems: TechStack[] }\n- state: items(TechStack[]) = initialItems, isLoading(boolean) = false\n- useFilterStore()에서 { category, tags, difficulty } 구독\n- useEffect([category, tags, difficulty]):\n  - URL 파라미터 조합: category가 null이면 생략, tags 배열→쉼표 구분 문자열, difficulty null이면 생략\n  - setIsLoading(true)\n  - fetch('/api/tech?category=X&tags=Y,Z&difficulty=Z') (NEXT_PUBLIC_BASE_URL 없이 상대경로 사용 가능, 클라이언트이므로)\n  - 응답: TechListResponse → setItems(data.items)\n  - finally: setIsLoading(false)\n  - 에러 시 items 유지 (폴백)\n- isLoading 시 간단한 로딩 텍스트 또는 opacity 처리\n- TechGrid에 items 전달",
+      "verificationCriteria": "컴포넌트 마운트 시 initialItems 표시. useFilterStore의 category/tags/difficulty 변경 시 /api/tech?... 재요청 후 TechGrid 업데이트. 필터 초기값(null/[]) 시 전체 목록 표시.",
+      "analysisResult": "ROADMAP.md Phase 3 핵심 기능 구현. Next.js 16.2.4 App Router + React 19 + @notionhq/client v5 + Tailwind CSS v4 + Zustand v5 + shadcn/ui(radix-nova) 기반. 히어로 섹션 유지 + Notion 기술 카드 그리드 추가, shiki 코드 하이라이팅 적용. 모든 파일은 @/* 절대 경로 사용, any 타입 금지, 서버 컴포넌트 기본 원칙 준수."
+    },
+    {
+      "id": "3750532d-441e-427f-958d-69ba414f2534",
+      "name": "[Phase 3] 홈 페이지 Notion 실제 데이터 연동",
+      "description": "app/page.tsx를 수정하여 서버에서 /api/tech 초기 데이터를 fetch하고, 기존 히어로·카테고리 섹션 아래에 전체 기술 카드 그리드 섹션을 추가한다.",
+      "notes": "기존 히어로 섹션의 정적 배지(techBadges 배열)와 카테고리 카드(categoryMeta)는 변경 없이 유지. HomePage 함수를 async로 변경해야 await fetch 사용 가능.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "244e3542-882b-449e-81aa-a9d4dfbd8753"
+        }
+      ],
+      "createdAt": "2026-05-07T13:44:29.367Z",
+      "updatedAt": "2026-05-07T13:44:29.367Z",
+      "relatedFiles": [
+        {
+          "path": "app/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "홈 페이지 Notion 연동",
+          "lineStart": 1,
+          "lineEnd": 100
+        },
+        {
+          "path": "components/tech/home-tech-list.tsx",
+          "type": "DEPENDENCY",
+          "description": "HomeTechList 컴포넌트"
+        },
+        {
+          "path": "lib/constants.ts",
+          "type": "REFERENCE",
+          "description": "NOTION_REVALIDATE_SECONDS = 60",
+          "lineStart": 33,
+          "lineEnd": 33
+        },
+        {
+          "path": "types/index.ts",
+          "type": "REFERENCE",
+          "description": "TechListResponse 타입",
+          "lineStart": 87,
+          "lineEnd": 90
+        }
+      ],
+      "implementationGuide": "app/page.tsx 수정:\n1. 파일 상단에 export const revalidate = 60 추가\n2. NOTION_REVALIDATE_SECONDS import from @/lib/constants\n3. TechListResponse import from @/types\n4. HomeTechList import from @/components/tech/home-tech-list\n5. HomePage를 async 함수로 변경\n6. 서버 fetch:\n   - const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'\n   - fetch(`${baseUrl}/api/tech`, { next: { revalidate: NOTION_REVALIDATE_SECONDS } })\n   - 실패 시 initialItems = [] 폴백\n7. 기존 히어로 섹션(라인 44-66) 유지\n8. 기존 카테고리 섹션(라인 68-97) 유지\n9. 새 섹션 추가 (카테고리 섹션 아래):\n   - h2: '전체 기술 스택'\n   - HomeTechList initialItems={initialItems}",
+      "verificationCriteria": "localhost:3000 접속 시 히어로 섹션 + 카테고리 섹션 유지. 하단에 '전체 기술 스택' 섹션과 Notion 실제 기술 카드 그리드 표시. export const revalidate = 60 선언 확인.",
+      "analysisResult": "ROADMAP.md Phase 3 핵심 기능 구현. Next.js 16.2.4 App Router + React 19 + @notionhq/client v5 + Tailwind CSS v4 + Zustand v5 + shadcn/ui(radix-nova) 기반. 히어로 섹션 유지 + Notion 기술 카드 그리드 추가, shiki 코드 하이라이팅 적용. 모든 파일은 @/* 절대 경로 사용, any 타입 금지, 서버 컴포넌트 기본 원칙 준수."
+    },
+    {
+      "id": "cafe5028-2ad2-42bd-a2a0-4afefa911377",
+      "name": "[Phase 3] NotionBlockRenderer 기본 블록 컴포넌트 구현",
+      "description": "Notion 블록을 렌더링하는 컴포넌트군을 구현한다. 진입점(NotionBlockRenderer), 텍스트 블록(Paragraph, Heading, BulletedList, NumberedList, Quote), 구분선(Divider), 폴백(Unsupported)을 구현한다. Rich text annotations(bold/italic/code/strikethrough) 처리 헬퍼를 NotionBlockRenderer에 정의한다.",
+      "notes": "renderRichText와 getBlockData는 NotionBlockRenderer.tsx 파일 내에 정의하고, 각 하위 컴포넌트에서 import해서 사용. RichTextItem 타입은 NotionBlockRenderer.tsx에서 export하여 하위 컴포넌트가 재사용.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "46119b88-dace-481f-b05c-2d3168b88f20"
+        }
+      ],
+      "createdAt": "2026-05-07T13:44:29.367Z",
+      "updatedAt": "2026-05-07T13:44:29.367Z",
+      "relatedFiles": [
+        {
+          "path": "components/tech/notion-renderer/NotionBlockRenderer.tsx",
+          "type": "CREATE",
+          "description": "블록 타입 분기 진입점 + RichText 헬퍼"
+        },
+        {
+          "path": "components/tech/notion-renderer/ParagraphBlock.tsx",
+          "type": "CREATE",
+          "description": "paragraph 블록"
+        },
+        {
+          "path": "components/tech/notion-renderer/HeadingBlock.tsx",
+          "type": "CREATE",
+          "description": "heading_1/2/3 블록"
+        },
+        {
+          "path": "components/tech/notion-renderer/BulletedListBlock.tsx",
+          "type": "CREATE",
+          "description": "bulleted_list_item 블록"
+        },
+        {
+          "path": "components/tech/notion-renderer/NumberedListBlock.tsx",
+          "type": "CREATE",
+          "description": "numbered_list_item 블록"
+        },
+        {
+          "path": "components/tech/notion-renderer/QuoteBlock.tsx",
+          "type": "CREATE",
+          "description": "quote 블록"
+        },
+        {
+          "path": "components/tech/notion-renderer/DividerBlock.tsx",
+          "type": "CREATE",
+          "description": "divider 블록"
+        },
+        {
+          "path": "components/tech/notion-renderer/UnsupportedBlock.tsx",
+          "type": "CREATE",
+          "description": "미지원 블록 폴백"
+        },
+        {
+          "path": "types/index.ts",
+          "type": "REFERENCE",
+          "description": "NotionBlock 타입",
+          "lineStart": 79,
+          "lineEnd": 84
+        },
+        {
+          "path": "lib/block-parser.ts",
+          "type": "REFERENCE",
+          "description": "mapBlockToNotionBlock - content 구조 확인",
+          "lineStart": 1,
+          "lineEnd": 11
+        }
+      ],
+      "implementationGuide": "1. components/tech/notion-renderer/ 디렉토리 생성\n\n2. RichText 타입 및 헬퍼 (NotionBlockRenderer.tsx 내부 정의):\n   - interface RichTextItem { plain_text: string, href: string | null, annotations: { bold, italic, code, strikethrough, underline, color } }\n   - function renderRichText(items: RichTextItem[]): React.ReactNode[]\n     - 각 item: bold→<strong>, italic→<em>, code→<code className='bg-muted px-1 rounded text-sm font-mono'>, strikethrough→<s>, 기본→<span>\n     - href 있으면 <a href={item.href}> 래핑\n\n3. 블록 데이터 접근 헬퍼:\n   - function getBlockData<T>(block: NotionBlock, type: string): T\n   - return (block.content as Record<string, unknown>)[type] as T\n\n4. UnsupportedBlock.tsx: ({ block }: { block: NotionBlock }) => null (빈 Fragment)\n\n5. DividerBlock.tsx: <hr className='my-6 border-border' />\n\n6. ParagraphBlock.tsx:\n   - getBlockData 로 paragraph 추출 ({ rich_text: RichTextItem[] })\n   - <p className='leading-7'>{renderRichText(rich_text)}</p>\n   - rich_text 비어있으면 <br />\n\n7. HeadingBlock.tsx:\n   - block.type에 따라 h1/h2/h3 분기\n   - heading_1: <h2 className='mt-8 text-2xl font-bold'>\n   - heading_2: <h3 className='mt-6 text-xl font-semibold'>\n   - heading_3: <h4 className='mt-4 text-lg font-medium'>\n   - rich_text 추출 후 renderRichText\n\n8. BulletedListBlock.tsx:\n   - <ul className='my-1 ml-6 list-disc'><li>{renderRichText(rich_text)}</li></ul>\n\n9. NumberedListBlock.tsx:\n   - <ol className='my-1 ml-6 list-decimal'><li>{renderRichText(rich_text)}</li></ol>\n\n10. QuoteBlock.tsx:\n    - <blockquote className='border-l-4 border-border pl-4 italic text-muted-foreground'>{renderRichText(rich_text)}</blockquote>\n\n11. NotionBlockRenderer.tsx (진입점):\n    - export function NotionBlockRenderer({ blocks }: { blocks: NotionBlock[] })\n    - blocks.map(block => <BlockSwitch key={block.id} block={block} />)\n    - BlockSwitch: switch(block.type) → 각 컴포넌트\n    - default: <UnsupportedBlock block={block} />",
+      "verificationCriteria": "TypeScript 컴파일 오류 없음. NotionBlockRenderer에 paragraph/heading/bulleted/numbered/quote/divider 블록 배열 전달 시 올바르게 렌더링. 미지원 블록 타입 포함 시 null 반환으로 페이지 렌더링 유지. bold/italic/code/strikethrough annotations 적용 확인.",
+      "analysisResult": "ROADMAP.md Phase 3 핵심 기능 구현. Next.js 16.2.4 App Router + React 19 + @notionhq/client v5 + Tailwind CSS v4 + Zustand v5 + shadcn/ui(radix-nova) 기반. 히어로 섹션 유지 + Notion 기술 카드 그리드 추가, shiki 코드 하이라이팅 적용. 모든 파일은 @/* 절대 경로 사용, any 타입 금지, 서버 컴포넌트 기본 원칙 준수."
+    },
+    {
+      "id": "8b0f07fe-7a1d-408b-a0de-4fa9265192f6",
+      "name": "[Phase 3] CalloutBlock 및 CodeBlock(shiki) 구현",
+      "description": "shadcn/ui Alert를 활용한 CalloutBlock과 shiki 서버 사이드 코드 하이라이팅을 적용한 async CodeBlock을 구현한다.",
+      "notes": "CodeBlock이 async이므로 NotionBlockRenderer에서 JSX로 사용할 때 Next.js App Router에서는 async 서버 컴포넌트를 부모 서버 컴포넌트에서 직접 렌더링 가능. dangerouslySetInnerHTML 사용은 shiki가 생성한 신뢰할 수 있는 HTML이므로 허용.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "cafe5028-2ad2-42bd-a2a0-4afefa911377"
+        }
+      ],
+      "createdAt": "2026-05-07T13:44:29.367Z",
+      "updatedAt": "2026-05-07T13:44:29.367Z",
+      "relatedFiles": [
+        {
+          "path": "components/tech/notion-renderer/CalloutBlock.tsx",
+          "type": "CREATE",
+          "description": "callout 블록 - shadcn/ui Alert 활용"
+        },
+        {
+          "path": "components/tech/notion-renderer/CodeBlock.tsx",
+          "type": "CREATE",
+          "description": "code 블록 - shiki 서버 사이드 하이라이팅"
+        },
+        {
+          "path": "components/tech/notion-renderer/NotionBlockRenderer.tsx",
+          "type": "TO_MODIFY",
+          "description": "callout, code case 추가"
+        },
+        {
+          "path": "components/ui/alert.tsx",
+          "type": "REFERENCE",
+          "description": "Alert, AlertDescription 컴포넌트"
+        },
+        {
+          "path": "package.json",
+          "type": "REFERENCE",
+          "description": "shiki 설치 확인"
+        }
+      ],
+      "implementationGuide": "1. CalloutBlock.tsx:\n   - import { Alert, AlertDescription } from '@/components/ui/alert'\n   - getBlockData로 callout 추출: { rich_text: RichTextItem[], icon: { type, emoji? } | null }\n   - icon.type === 'emoji' 이면 icon.emoji 표시\n   - <Alert><AlertDescription>{icon 있으면 icon} {renderRichText(rich_text)}</AlertDescription></Alert>\n\n2. CodeBlock.tsx (async 서버 컴포넌트):\n   - 'use client' 절대 금지, async function\n   - import { codeToHtml } from 'shiki'\n   - getBlockData로 code 추출: { rich_text: RichTextItem[], language: string, caption: RichTextItem[] }\n   - plainText = rich_text.map(t => t.plain_text).join('')\n   - caption = caption?.map(t => t.plain_text).join('')\n   - SUPPORTED_LANGS = ['c', 'cpp', 'shell', 'bash', 'python', 'makefile'] as const\n   - lang = SUPPORTED_LANGS.includes(language) ? language : 'plaintext'\n   - html = await codeToHtml(plainText, { lang, theme: 'github-dark' })\n   - 반환:\n     <figure className='my-4'>\n       <div className='overflow-x-auto rounded-lg text-sm [&>pre]:p-4'\n         dangerouslySetInnerHTML={{ __html: html }} />\n       {caption && <figcaption className='mt-1 text-center text-xs text-muted-foreground'>{caption}</figcaption>}\n     </figure>\n\n3. NotionBlockRenderer.tsx BlockSwitch에 추가:\n   - case 'callout': return <CalloutBlock block={block} />\n   - case 'code': return <CodeBlock block={block} />",
+      "verificationCriteria": "code 블록: C/C++/Shell/Python/Makefile 코드에 shiki github-dark 테마 문법 강조 적용. 미지원 언어(예: java)는 plaintext로 폴백 렌더링. callout 블록: Alert 컴포넌트로 아이콘+텍스트 표시. CodeBlock.tsx에 'use client' 없음 확인.",
+      "analysisResult": "ROADMAP.md Phase 3 핵심 기능 구현. Next.js 16.2.4 App Router + React 19 + @notionhq/client v5 + Tailwind CSS v4 + Zustand v5 + shadcn/ui(radix-nova) 기반. 히어로 섹션 유지 + Notion 기술 카드 그리드 추가, shiki 코드 하이라이팅 적용. 모든 파일은 @/* 절대 경로 사용, any 타입 금지, 서버 컴포넌트 기본 원칙 준수."
+    },
+    {
+      "id": "fb3229b3-de72-4c33-a2d8-d4ba8bc8598e",
+      "name": "[Phase 3] 기술 상세 페이지 NotionBlockRenderer 연결",
+      "description": "app/tech/[id]/page.tsx의 개념·구현 경험·트러블슈팅 3개 섹션에 있는 플레이스홀더 div를 NotionBlockRenderer로 교체한다.",
+      "notes": "기존 섹션 제목(<h2>개념 (Concept)</h2> 등)과 조건부 렌더링(hasConceptSection 체크)은 유지. 플레이스홀더 div만 교체. 섹션이 비어있을 때 안내 메시지(아직 작성된 내용이 없습니다.)도 유지.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "8b0f07fe-7a1d-408b-a0de-4fa9265192f6"
+        }
+      ],
+      "createdAt": "2026-05-07T13:44:29.367Z",
+      "updatedAt": "2026-05-07T13:44:29.367Z",
+      "relatedFiles": [
+        {
+          "path": "app/tech/[id]/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "3개 섹션 플레이스홀더 → NotionBlockRenderer 교체",
+          "lineStart": 100,
+          "lineEnd": 148
+        },
+        {
+          "path": "components/tech/notion-renderer/NotionBlockRenderer.tsx",
+          "type": "DEPENDENCY",
+          "description": "NotionBlockRenderer 컴포넌트"
+        },
+        {
+          "path": "types/index.ts",
+          "type": "REFERENCE",
+          "description": "TechStackDetail, NotionBlock 타입",
+          "lineStart": 71,
+          "lineEnd": 84
+        }
+      ],
+      "implementationGuide": "app/tech/[id]/page.tsx 수정:\n1. import 추가: import { NotionBlockRenderer } from '@/components/tech/notion-renderer/NotionBlockRenderer'\n\n2. 개념 섹션 플레이스홀더 교체 (라인 106-111):\n   제거: <div className='rounded-lg border bg-muted/30 ...'>{data.content.concept.length}개의 블록...</div>\n   추가: <NotionBlockRenderer blocks={data.content.concept} />\n\n3. 구현 경험 섹션 플레이스홀더 교체 (라인 118-123): 동일하게 data.content.implementation\n\n4. 트러블슈팅 섹션 플레이스홀더 교체 (라인 130-135): 동일하게 data.content.troubleshooting\n\n5. 기존 hasConceptSection 등 조건부 렌더링 로직(라인 59-61)은 유지 (섹션 없으면 섹션 자체를 렌더링 안 함)",
+      "verificationCriteria": "localhost:3000/tech/[실제Notion페이지ID] 접속 시: 개념/구현 경험/트러블슈팅 섹션에 실제 Notion 블록 내용 렌더링. 플레이스홀더 텍스트('N개의 블록이 있습니다.') 미표시. 빈 섹션은 섹션 자체가 렌더링되지 않음(기존 로직 유지). 코드 블록 shiki 하이라이팅 적용. 미지원 블록 있어도 페이지 렌더링 중단 없음.",
+      "analysisResult": "ROADMAP.md Phase 3 핵심 기능 구현. Next.js 16.2.4 App Router + React 19 + @notionhq/client v5 + Tailwind CSS v4 + Zustand v5 + shadcn/ui(radix-nova) 기반. 히어로 섹션 유지 + Notion 기술 카드 그리드 추가, shiki 코드 하이라이팅 적용. 모든 파일은 @/* 절대 경로 사용, any 타입 금지, 서버 컴포넌트 기본 원칙 준수."
+    },
+    {
+      "id": "22e08841-cb6a-453a-bcda-57d665213a64",
+      "name": "[Phase 1] Next.js 프로젝트 초기화 및 TypeScript 설정",
+      "description": "Next.js 16.2.4(App Router), TypeScript strict 모드, @/* 경로 별칭, Turbopack, postcss 설정 완료.",
+      "status": "completed",
+      "dependencies": [],
+      "createdAt": "2026-05-07T14:15:57.577Z",
+      "updatedAt": "2026-05-08T00:30:21.866Z",
+      "relatedFiles": [
+        {
+          "path": "tsconfig.json",
+          "type": "TO_MODIFY",
+          "description": "strict, @/* 경로 별칭"
+        },
+        {
+          "path": "next.config.ts",
+          "type": "TO_MODIFY",
+          "description": "Turbopack, 이미지 remotePatterns"
+        },
+        {
+          "path": "postcss.config.mjs",
+          "type": "TO_MODIFY",
+          "description": "Tailwind v4 postcss 방식"
+        },
+        {
+          "path": "package.json",
+          "type": "TO_MODIFY",
+          "description": "의존성 정의"
+        }
+      ],
+      "implementationGuide": "완료됨. Next.js 16.2.4 App Router 기반, TypeScript strict 모드, tsconfig.json의 @/* 경로 별칭, next.config.ts Turbopack 설정.",
+      "verificationCriteria": "npm run dev 정상 실행, npm run build TypeScript 오류 없음.",
+      "analysisResult": "ROADMAP.md 기준 전체 Phase 진행 현황 추적을 위한 완료 태스크 등록. Phase 1과 Phase 2는 이미 100% 완료된 상태이며, 실제 파일로 확인됨.",
+      "summary": "tsconfig.json(strict, @/* 경로 별칭), next.config.ts(Turbopack, 이미지 remotePatterns), postcss.config.mjs(Tailwind v4), package.json(Next.js 16.2.4) 모두 실제 파일로 존재 확인. npm run dev 및 build 정상 동작 전제로 완료 처리.",
+      "completedAt": "2026-05-08T00:30:21.861Z"
+    },
+    {
+      "id": "a99679e1-f548-48e9-85be-d26bfe1e04d9",
+      "name": "[Phase 1] Tailwind CSS v4 및 shadcn/ui 초기화",
+      "description": "Tailwind CSS v4 postcss 방식 설정, shadcn/ui radix-nova 스타일, oklch 색상 시스템, globals.css 디자인 토큰 정의 완료.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "22e08841-cb6a-453a-bcda-57d665213a64"
+        }
+      ],
+      "createdAt": "2026-05-07T14:15:57.577Z",
+      "updatedAt": "2026-05-08T00:30:45.398Z",
+      "relatedFiles": [
+        {
+          "path": "app/globals.css",
+          "type": "TO_MODIFY",
+          "description": "oklch 색상 토큰, Tailwind v4 임포트"
+        },
+        {
+          "path": "components.json",
+          "type": "TO_MODIFY",
+          "description": "shadcn/ui radix-nova 설정"
+        }
+      ],
+      "implementationGuide": "완료됨. tailwind.config.* 없음(postcss 방식), globals.css에 oklch 기반 CSS 커스텀 속성 정의, shadcn/ui radix-nova 스타일 적용.",
+      "verificationCriteria": "다크모드 토글 시 oklch 색상 시스템 정상 전환.",
+      "analysisResult": "ROADMAP.md 기준 전체 Phase 진행 현황 추적을 위한 완료 태스크 등록. Phase 1과 Phase 2는 이미 100% 완료된 상태이며, 실제 파일로 확인됨.",
+      "summary": "app/globals.css에 oklch 기반 CSS 커스텀 속성(라이트/다크 토큰), @import tailwindcss/tw-animate-css/shadcn 구조, components.json radix-nova 설정 모두 실제 파일로 확인. tailwind.config.* 없는 postcss 방식 적용 완료.",
+      "completedAt": "2026-05-08T00:30:45.394Z"
+    },
+    {
+      "id": "421a1dd0-7116-4353-9ec3-0c85359692ba",
+      "name": "[Phase 1] 환경변수 및 보안 설정",
+      "description": "NOTION_TOKEN, NOTION_DATABASE_ID, NEXT_PUBLIC_BASE_URL 환경변수 체계 구성. .env.example 문서화, .gitignore에 .env.local 포함 완료.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "22e08841-cb6a-453a-bcda-57d665213a64"
+        }
+      ],
+      "createdAt": "2026-05-07T14:15:57.577Z",
+      "updatedAt": "2026-05-08T00:31:09.839Z",
+      "relatedFiles": [
+        {
+          "path": ".env.example",
+          "type": "TO_MODIFY",
+          "description": "환경변수 템플릿"
+        },
+        {
+          "path": ".gitignore",
+          "type": "TO_MODIFY",
+          "description": ".env.local 제외"
+        }
+      ],
+      "implementationGuide": "완료됨. .env.local에 실제 값, .env.example에 키 목록만 커밋.",
+      "verificationCriteria": ".env.local이 git에 노출되지 않음, process.env로 서버에서 접근 가능.",
+      "analysisResult": "ROADMAP.md 기준 전체 Phase 진행 현황 추적을 위한 완료 태스크 등록. Phase 1과 Phase 2는 이미 100% 완료된 상태이며, 실제 파일로 확인됨.",
+      "summary": ".env.example에 NOTION_TOKEN/NOTION_DATABASE_ID/NEXT_PUBLIC_BASE_URL 키 목록 정의, .gitignore에 .env.local 제외 설정 완료. 실제 파일로 존재 확인됨. 서버 환경변수 보안 체계 완성.",
+      "completedAt": "2026-05-08T00:31:09.837Z"
+    },
+    {
+      "id": "1c9f7b5e-3a3a-4003-9f3a-d4cf42012712",
+      "name": "[Phase 1] 루트 레이아웃 및 공통 레이아웃 컴포넌트",
+      "description": "app/layout.tsx(Geist 폰트, ThemeProvider, Header, Footer, Toaster), ThemeProvider 자체 구현, 스티키 헤더, 반응형 모바일 메뉴 완료.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "a99679e1-f548-48e9-85be-d26bfe1e04d9"
+        }
+      ],
+      "createdAt": "2026-05-07T14:15:57.577Z",
+      "updatedAt": "2026-05-08T00:31:15.316Z",
+      "relatedFiles": [
+        {
+          "path": "app/layout.tsx",
+          "type": "TO_MODIFY",
+          "description": "루트 레이아웃"
+        },
+        {
+          "path": "components/providers/theme-provider.tsx",
+          "type": "TO_MODIFY",
+          "description": "자체 ThemeProvider 구현"
+        },
+        {
+          "path": "components/layout/header.tsx",
+          "type": "TO_MODIFY",
+          "description": "스티키 헤더"
+        },
+        {
+          "path": "components/layout/footer.tsx",
+          "type": "TO_MODIFY",
+          "description": "푸터"
+        },
+        {
+          "path": "components/layout/mobile-menu.tsx",
+          "type": "TO_MODIFY",
+          "description": "모바일 햄버거 메뉴"
+        },
+        {
+          "path": "components/layout/nav-links.tsx",
+          "type": "TO_MODIFY",
+          "description": "네비게이션 링크"
+        },
+        {
+          "path": "components/layout/theme-toggle.tsx",
+          "type": "TO_MODIFY",
+          "description": "라이트/다크/시스템 토글"
+        }
+      ],
+      "implementationGuide": "완료됨. next-themes 미사용, localStorage 기반 자체 ThemeProvider. 헤더는 max-w-5xl 기준 스티키.",
+      "verificationCriteria": "localhost:3000 헤더/푸터 정상 렌더링, 375px/768px/1280px 반응형 확인.",
+      "analysisResult": "ROADMAP.md 기준 전체 Phase 진행 현황 추적을 위한 완료 태스크 등록. Phase 1과 Phase 2는 이미 100% 완료된 상태이며, 실제 파일로 확인됨.",
+      "summary": "app/layout.tsx(Geist 폰트, ThemeProvider, Header, Footer, Toaster), components/providers/theme-provider.tsx(localStorage 기반 자체 구현, next-themes 미사용), header/footer/nav-links/mobile-menu/theme-toggle 7개 파일 모두 실제 존재 확인. 스티키 헤더 max-w-5xl 기준, 모바일 Dialog 메뉴 완성.",
+      "completedAt": "2026-05-08T00:31:15.312Z"
+    },
+    {
+      "id": "5ddac6fb-aede-43de-b370-267cdb0d3704",
+      "name": "[Phase 1] 오류 페이지 및 404 페이지",
+      "description": "app/error.tsx(클라이언트 컴포넌트, reset/홈이동 버튼), app/not-found.tsx(404 안내 + 홈이동) 완료.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "1c9f7b5e-3a3a-4003-9f3a-d4cf42012712"
+        }
+      ],
+      "createdAt": "2026-05-07T14:15:57.577Z",
+      "updatedAt": "2026-05-08T00:31:42.928Z",
+      "relatedFiles": [
+        {
+          "path": "app/error.tsx",
+          "type": "TO_MODIFY",
+          "description": "런타임 오류 페이지 (use client 필수)"
+        },
+        {
+          "path": "app/not-found.tsx",
+          "type": "TO_MODIFY",
+          "description": "404 페이지"
+        }
+      ],
+      "implementationGuide": "완료됨. error.tsx는 'use client' 필수(Next.js 규칙), reset()과 홈이동 버튼 제공.",
+      "verificationCriteria": "존재하지 않는 경로 접근 시 404 페이지, API 오류 시 error.tsx 표시.",
+      "analysisResult": "ROADMAP.md 기준 전체 Phase 진행 현황 추적을 위한 완료 태스크 등록. Phase 1과 Phase 2는 이미 100% 완료된 상태이며, 실제 파일로 확인됨.",
+      "summary": "app/error.tsx('use client', reset()/홈이동 버튼, useEffect로 오류 로깅), app/not-found.tsx(404 안내 + 홈이동 Button) 실제 파일 존재 확인. Next.js App Router 규칙 준수 완료.",
+      "completedAt": "2026-05-08T00:31:42.922Z"
+    },
+    {
+      "id": "40ed8dcb-22ba-4959-91de-4f4b256e46c2",
+      "name": "[Phase 2] Notion 데이터 계층 구현",
+      "description": "lib/notion.ts(클라이언트 싱글턴+환경변수 검증), lib/tech-mapper.ts(Notion→TechStack 변환 7개 함수), lib/block-parser.ts(H2 헤딩 기준 섹션 분리 한/영 지원), lib/constants.ts, lib/utils.ts 완료.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "421a1dd0-7116-4353-9ec3-0c85359692ba"
+        }
+      ],
+      "createdAt": "2026-05-07T14:16:39.320Z",
+      "updatedAt": "2026-05-08T00:31:55.382Z",
+      "relatedFiles": [
+        {
+          "path": "lib/notion.ts",
+          "type": "TO_MODIFY",
+          "description": "Notion 클라이언트 싱글턴, v5 API(dataSources.query)"
+        },
+        {
+          "path": "lib/tech-mapper.ts",
+          "type": "TO_MODIFY",
+          "description": "PageObjectResponse → TechStack 변환"
+        },
+        {
+          "path": "lib/block-parser.ts",
+          "type": "TO_MODIFY",
+          "description": "블록 → {concept, implementation, troubleshooting} 섹션 분리"
+        },
+        {
+          "path": "lib/constants.ts",
+          "type": "TO_MODIFY",
+          "description": "TECH_CATEGORIES, DIFFICULTY_LABELS, NOTION_REVALIDATE_SECONDS"
+        },
+        {
+          "path": "lib/utils.ts",
+          "type": "TO_MODIFY",
+          "description": "cn() 유틸리티"
+        }
+      ],
+      "implementationGuide": "완료됨. @notionhq/client v5 사용, notion.dataSources.query()로 데이터베이스 쿼리. block-parser는 H2 헤딩 텍스트('개념'/'concept' 등)로 섹션 분리.",
+      "verificationCriteria": "lib/tech-mapper.ts: Notion Page → TechStack 변환 정상. lib/block-parser.ts: H2 기준 섹션 분리 검증.",
+      "analysisResult": "Phase 2 공통 모듈 — 이미 100% 완료된 상태. 실제 파일로 확인됨.",
+      "summary": "lib/notion.ts(싱글턴+환경변수 검증), lib/tech-mapper.ts(7개 extract 함수, PageObjectResponse→TechStack), lib/block-parser.ts(H2 헤딩 한/영 섹션 분리), lib/constants.ts(NOTION_REVALIDATE_SECONDS=60), lib/utils.ts(cn()) 5개 파일 실제 존재 확인. @notionhq/client v5 dataSources.query() 사용.",
+      "completedAt": "2026-05-08T00:31:55.378Z"
+    },
+    {
+      "id": "a53b1b2d-3adf-4ad1-8872-dfbfadca6e4e",
+      "name": "[Phase 2] TypeScript 타입 정의",
+      "description": "types/index.ts에 TechStack, TechStackDetail, TechListResponse, SearchResponse, TechCategory, Difficulty, NotionBlock, FilterState 등 전체 타입 정의 완료.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "40ed8dcb-22ba-4959-91de-4f4b256e46c2"
+        }
+      ],
+      "createdAt": "2026-05-07T14:16:39.320Z",
+      "updatedAt": "2026-05-08T00:32:12.899Z",
+      "relatedFiles": [
+        {
+          "path": "types/index.ts",
+          "type": "TO_MODIFY",
+          "description": "전체 타입 정의 — any 없음, NotionBlock.content는 Record<string, unknown>"
+        }
+      ],
+      "implementationGuide": "완료됨. any 타입 없음. NotionBlock.content: Record<string, unknown>. TechStackDetail extends TechStack with content sections.",
+      "verificationCriteria": "npm run build TypeScript 컴파일 오류 없음.",
+      "analysisResult": "Phase 2 공통 모듈 — 이미 100% 완료된 상태. 실제 파일로 확인됨.",
+      "summary": "types/index.ts에 TechStack, TechStackDetail, TechListResponse, SearchResponse, TechCategory, Difficulty, NotionBlock(content: Record&lt;string, unknown&gt;), FilterState 등 전체 타입 정의 완료. any 타입 없음, TypeScript strict 모드 통과.",
+      "completedAt": "2026-05-08T00:32:12.893Z"
+    },
+    {
+      "id": "32dfcd63-71b4-4ce1-bc41-3f94ea9b75bd",
+      "name": "[Phase 2] 커스텀 훅 및 상태 관리",
+      "description": "hooks/use-debounce.ts(usehooks-ts re-export), hooks/use-local-storage.ts, hooks/use-media-query.ts, hooks/use-toast.ts(globalThis 기반 커스텀), store/filter-store.ts(Zustand v5) 완료.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "a53b1b2d-3adf-4ad1-8872-dfbfadca6e4e"
+        }
+      ],
+      "createdAt": "2026-05-07T14:16:39.320Z",
+      "updatedAt": "2026-05-08T00:32:27.827Z",
+      "relatedFiles": [
+        {
+          "path": "hooks/use-debounce.ts",
+          "type": "TO_MODIFY",
+          "description": "usehooks-ts useDebounceValue re-export"
+        },
+        {
+          "path": "hooks/use-local-storage.ts",
+          "type": "TO_MODIFY",
+          "description": "usehooks-ts re-export"
+        },
+        {
+          "path": "hooks/use-media-query.ts",
+          "type": "TO_MODIFY",
+          "description": "usehooks-ts re-export"
+        },
+        {
+          "path": "hooks/use-toast.ts",
+          "type": "TO_MODIFY",
+          "description": "globalThis 기반 커스텀 토스트"
+        },
+        {
+          "path": "store/filter-store.ts",
+          "type": "TO_MODIFY",
+          "description": "Zustand v5, category/tags/difficulty/searchKeyword 필터 상태"
+        }
+      ],
+      "implementationGuide": "완료됨. store/filter-store.ts는 파일 최상단 'use client'. useDebounce는 튜플 반환([debouncedValue, setValue]).",
+      "verificationCriteria": "useFilterStore DevTools에서 상태 변화 확인. useDebounce 300ms 딜레이 동작.",
+      "analysisResult": "Phase 2 공통 모듈 — 이미 100% 완료된 상태. 실제 파일로 확인됨.",
+      "summary": "hooks/use-debounce.ts(usehooks-ts useDebounceValue re-export), use-local-storage.ts, use-media-query.ts, use-toast.ts(globalThis 기반 커스텀 구현), store/filter-store.ts('use client', Zustand v5, setCategory/toggleTag/setDifficulty/setSearchKeyword/resetFilters) 5개 파일 실제 존재 확인.",
+      "completedAt": "2026-05-08T00:32:27.824Z"
+    },
+    {
+      "id": "eafeca20-f020-470d-9024-b1bc46ebe71f",
+      "name": "[Phase 2] shadcn/ui 컴포넌트 설치",
+      "description": "components/ui/ 하위 badge, button, card, dialog, input, select, skeleton, tabs, toast, alert, checkbox, label, radio-group, separator, switch, tooltip, toaster 16개 컴포넌트 설치 완료.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "a99679e1-f548-48e9-85be-d26bfe1e04d9"
+        }
+      ],
+      "createdAt": "2026-05-07T14:16:39.320Z",
+      "updatedAt": "2026-05-08T00:31:47.367Z",
+      "relatedFiles": [
+        {
+          "path": "components/ui/",
+          "type": "TO_MODIFY",
+          "description": "shadcn/ui 컴포넌트 16개 — 직접 수정 금지"
+        }
+      ],
+      "implementationGuide": "완료됨. npx shadcn@latest add 로 설치. radix-nova 스타일. 직접 수정 금지.",
+      "verificationCriteria": "components/ui/ 하위 16개 파일 존재 확인.",
+      "analysisResult": "Phase 2 공통 모듈 — 이미 100% 완료된 상태. 실제 파일로 확인됨.",
+      "summary": "components/ui/ 하위 alert, badge, button, card, checkbox, dialog, input, label, radio-group, select, separator, switch, tabs, toast, toaster, tooltip 16개 파일 실제 존재 확인. radix-nova 스타일 적용, 직접 수정 금지 원칙 수립.",
+      "completedAt": "2026-05-08T00:31:47.361Z"
+    },
+    {
+      "id": "2a961f47-a2e4-401d-ae23-0b2aa6927f3c",
+      "name": "[Phase 3] API Route Handler 구현",
+      "description": "GET /api/tech(카테고리/태그/난이도 필터, 중요도 정렬), GET /api/tech/[id](상세+블록파싱), GET /api/tech/search?q=(키워드검색) 3개 Route Handler 완료. 모두 force-dynamic 적용.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "40ed8dcb-22ba-4959-91de-4f4b256e46c2"
+        }
+      ],
+      "createdAt": "2026-05-07T14:17:22.494Z",
+      "updatedAt": "2026-05-08T00:32:46.738Z",
+      "relatedFiles": [
+        {
+          "path": "app/api/tech/route.ts",
+          "type": "TO_MODIFY",
+          "description": "force-dynamic, 필터 쿼리 파라미터 처리"
+        },
+        {
+          "path": "app/api/tech/[id]/route.ts",
+          "type": "TO_MODIFY",
+          "description": "revalidate=60, 블록 파싱 포함"
+        },
+        {
+          "path": "app/api/tech/search/route.ts",
+          "type": "TO_MODIFY",
+          "description": "force-dynamic, Title OR Summary 검색"
+        }
+      ],
+      "implementationGuide": "완료됨. @notionhq/client v5 dataSources.query() 사용. /api/tech와 /api/tech/search는 searchParams 사용으로 force-dynamic. /api/tech/[id]는 revalidate=60.",
+      "verificationCriteria": "GET /api/tech 200 응답, GET /api/tech/[유효ID] 상세 반환, GET /api/tech/search?q=키워드 결과 반환.",
+      "analysisResult": "Phase 3 부분 완료 항목(API Route Handler, TechCard, CategoryPage)을 completed로 등록. Phase 4 항목 등록(완료 2개 + 미구현 2개).",
+      "summary": "app/api/tech/route.ts(force-dynamic, category/tags/difficulty 필터, Importance 내림차순 정렬), app/api/tech/[id]/route.ts(revalidate=60, 블록 파싱 포함), app/api/tech/search/route.ts(force-dynamic, Title OR Summary 검색) 3개 Route Handler 실제 파일 확인. @notionhq/client v5 dataSources.query() 사용.",
+      "completedAt": "2026-05-08T00:32:46.735Z"
+    },
+    {
+      "id": "8311d415-3bbf-474d-a595-19df98344f4a",
+      "name": "[Phase 3] TechCard 컴포넌트 및 카테고리 페이지",
+      "description": "components/tech/tech-card.tsx(난이도 배지, 중요도 별, 태그 5개+더보기), app/category/[category]/page.tsx(ISR 60초, generateStaticParams, Empty State) 완료.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "2a961f47-a2e4-401d-ae23-0b2aa6927f3c"
+        },
+        {
+          "taskId": "eafeca20-f020-470d-9024-b1bc46ebe71f"
+        }
+      ],
+      "createdAt": "2026-05-07T14:17:22.494Z",
+      "updatedAt": "2026-05-08T00:33:08.820Z",
+      "relatedFiles": [
+        {
+          "path": "components/tech/tech-card.tsx",
+          "type": "TO_MODIFY",
+          "description": "TechCard — tech: TechStack props"
+        },
+        {
+          "path": "app/category/[category]/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "ISR 60초, generateStaticParams, 반응형 그리드"
+        }
+      ],
+      "implementationGuide": "완료됨. TechCard: Link→Card 구조, 난이도별 배지 색상, 태그 5개 슬라이스+더보기, 중요도 별★. 카테고리 페이지: grid gap-4 sm:grid-cols-2 lg:grid-cols-3.",
+      "verificationCriteria": "/category/Kernel 접속 시 TechCard 그리드 정상 표시.",
+      "analysisResult": "Phase 3 부분 완료 항목(API Route Handler, TechCard, CategoryPage)을 completed로 등록. Phase 4 항목 등록(완료 2개 + 미구현 2개).",
+      "summary": "components/tech/tech-card.tsx(Link→Card, 난이도별 배지 색상 매핑, 태그 5개 슬라이스+더보기, 중요도 ★ 문자), app/category/[category]/page.tsx(revalidate=60, generateStaticParams, grid gap-4 sm:grid-cols-2 lg:grid-cols-3, Empty State UI) 실제 파일 확인. 카테고리 페이지 기존 inline 그리드 동작 완료.",
+      "completedAt": "2026-05-08T00:33:08.816Z"
+    },
+    {
+      "id": "919ecd1f-cd38-441f-b416-daacd1d87182",
+      "name": "[Phase 4] Zustand 필터 스토어 및 검색 API (완료)",
+      "description": "store/filter-store.ts(setCategory/toggleTag/setDifficulty/resetFilters), app/api/tech/search/route.ts, hooks/use-debounce.ts 완료. Phase 4의 기반 인프라.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "32dfcd63-71b4-4ce1-bc41-3f94ea9b75bd"
+        },
+        {
+          "taskId": "2a961f47-a2e4-401d-ae23-0b2aa6927f3c"
+        }
+      ],
+      "createdAt": "2026-05-07T14:17:22.494Z",
+      "updatedAt": "2026-05-08T00:33:12.938Z",
+      "relatedFiles": [
+        {
+          "path": "store/filter-store.ts",
+          "type": "REFERENCE",
+          "description": "이미 완료됨"
+        },
+        {
+          "path": "app/api/tech/search/route.ts",
+          "type": "REFERENCE",
+          "description": "이미 완료됨"
+        },
+        {
+          "path": "hooks/use-debounce.ts",
+          "type": "REFERENCE",
+          "description": "이미 완료됨"
+        }
+      ],
+      "implementationGuide": "완료됨. Phase 4 FilterBar와 SearchInput 구현의 기반이 되는 인프라.",
+      "verificationCriteria": "useFilterStore 액션 모두 동작, /api/tech/search?q= 응답 정상.",
+      "analysisResult": "Phase 3 부분 완료 항목(API Route Handler, TechCard, CategoryPage)을 completed로 등록. Phase 4 항목 등록(완료 2개 + 미구현 2개).",
+      "summary": "store/filter-store.ts(Zustand v5, setCategory/toggleTag/clearTags/setDifficulty/setSearchKeyword/resetFilters 완비), app/api/tech/search/route.ts(force-dynamic, Title OR Summary 키워드 검색), hooks/use-debounce.ts(usehooks-ts re-export) 3개 파일 모두 실제 존재 확인. Phase 4 FilterBar·SearchInput 구현의 기반 인프라 완성.",
+      "completedAt": "2026-05-08T00:33:12.934Z"
+    },
+    {
+      "id": "82bc2c67-ebaa-4a0d-ad58-1ba7a6fa3560",
+      "name": "[Phase 4] FilterBar 컴포넌트 구현",
+      "description": "components/tech/filter-bar.tsx 신규 구현. shadcn/ui Tabs로 카테고리 탭(전체/Kernel/Driver/RTOS/Yocto), 태그 멀티 선택 토글, 난이도 Select, 필터 초기화 버튼. useFilterStore 연결.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "919ecd1f-cd38-441f-b416-daacd1d87182"
+        },
+        {
+          "taskId": "46119b88-dace-481f-b05c-2d3168b88f20"
+        }
+      ],
+      "createdAt": "2026-05-07T14:17:22.494Z",
+      "updatedAt": "2026-05-07T14:17:22.494Z",
+      "relatedFiles": [
+        {
+          "path": "components/tech/filter-bar.tsx",
+          "type": "CREATE",
+          "description": "신규 — 'use client' 필수"
+        },
+        {
+          "path": "store/filter-store.ts",
+          "type": "REFERENCE",
+          "description": "useFilterStore 구독"
+        },
+        {
+          "path": "components/ui/tabs.tsx",
+          "type": "DEPENDENCY",
+          "description": "카테고리 탭"
+        },
+        {
+          "path": "components/ui/select.tsx",
+          "type": "DEPENDENCY",
+          "description": "난이도 Select"
+        }
+      ],
+      "implementationGuide": "'use client'. useFilterStore()에서 setCategory/toggleTag/setDifficulty/resetFilters 연결. FilterBar 자체는 fetch 안 함 — 상태 변경만. 태그는 constants.ts TECH_CATEGORIES 또는 Notion 동적 집계(Q4 결정 후).",
+      "verificationCriteria": "카테고리 탭 클릭 → category 상태 변경, 태그 토글 → tags 배열 업데이트, 난이도 Select → difficulty 변경, 초기화 버튼 → resetFilters().",
+      "analysisResult": "Phase 3 부분 완료 항목(API Route Handler, TechCard, CategoryPage)을 completed로 등록. Phase 4 항목 등록(완료 2개 + 미구현 2개)."
+    },
+    {
+      "id": "494fe324-757b-4f29-ae74-5de804dd4a45",
+      "name": "[Phase 4] SearchInput 컴포넌트 및 검색 결과 페이지 연결",
+      "description": "components/layout/search-input.tsx(Input+검색아이콘, useDebounce 300ms, /search?q= 라우팅), app/search/page.tsx에 TechGrid 연결 및 Empty State 완성.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "919ecd1f-cd38-441f-b416-daacd1d87182"
+        },
+        {
+          "taskId": "46119b88-dace-481f-b05c-2d3168b88f20"
+        }
+      ],
+      "createdAt": "2026-05-07T14:17:22.494Z",
+      "updatedAt": "2026-05-07T14:17:22.494Z",
+      "relatedFiles": [
+        {
+          "path": "components/layout/search-input.tsx",
+          "type": "CREATE",
+          "description": "신규 — 'use client', useDebounce 300ms"
+        },
+        {
+          "path": "app/search/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "TechGrid 교체, Empty State 완성"
+        },
+        {
+          "path": "hooks/use-debounce.ts",
+          "type": "REFERENCE",
+          "description": "useDebounce([debouncedValue] = useDebounce(value, 300))"
+        },
+        {
+          "path": "components/ui/input.tsx",
+          "type": "DEPENDENCY",
+          "description": "shadcn/ui Input"
+        }
+      ],
+      "implementationGuide": "'use client'. useDebounce 사용 시 튜플: const [debouncedValue] = useDebounce(value, 300). 엔터/버튼 클릭 → router.push('/search?q=keyword'). Zustand 경유 금지(URL searchParams 기반). search/page.tsx는 Phase 3 TechGrid 재사용.",
+      "verificationCriteria": "홈 검색창 키워드 입력 → /search?q=키워드 이동. 결과 TechCard 그리드 표시. 결과 없을 시 Empty State.",
+      "analysisResult": "Phase 3 부분 완료 항목(API Route Handler, TechCard, CategoryPage)을 completed로 등록. Phase 4 항목 등록(완료 2개 + 미구현 2개)."
+    },
+    {
+      "id": "b4e09fc7-e6e3-4894-819a-4fe85d5bdf06",
+      "name": "[Phase 5] 로딩 스켈레톤 UI 및 Suspense 적용",
+      "description": "components/tech/tech-card-skeleton.tsx(TechCard와 동일 크기, shadcn/ui Skeleton), app/page.tsx·category/[category]/page.tsx·search/page.tsx에 Suspense + 스켈레톤 적용.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "3750532d-441e-427f-958d-69ba414f2534"
+        },
+        {
+          "taskId": "494fe324-757b-4f29-ae74-5de804dd4a45"
+        }
+      ],
+      "createdAt": "2026-05-07T14:17:58.695Z",
+      "updatedAt": "2026-05-07T14:17:58.695Z",
+      "relatedFiles": [
+        {
+          "path": "components/tech/tech-card-skeleton.tsx",
+          "type": "CREATE",
+          "description": "TechCard 동일 크기 스켈레톤"
+        },
+        {
+          "path": "app/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "Suspense + 스켈레톤 적용"
+        },
+        {
+          "path": "app/category/[category]/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "Suspense + 스켈레톤 적용"
+        },
+        {
+          "path": "app/search/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "Suspense + 스켈레톤 적용"
+        },
+        {
+          "path": "components/ui/skeleton.tsx",
+          "type": "DEPENDENCY",
+          "description": "shadcn/ui Skeleton 재사용"
+        }
+      ],
+      "implementationGuide": "shadcn/ui Skeleton 컴포넌트 사용. TechCard와 동일한 h-[xxx]px 높이로 스켈레톤 카드 설계. 그리드 6개 스켈레톤 표시(3열×2행). Suspense fallback에 스켈레톤 그리드 사용.",
+      "verificationCriteria": "Notion API 응답 대기 중 스켈레톤 카드 표시. 로드 완료 시 실제 TechCard로 교체.",
+      "analysisResult": "Phase 5 최적화 및 배포 — 미시작 상태. Phase 3+4 완료 후 진행."
+    },
+    {
+      "id": "ba2ce178-1859-4f04-90a0-4f97c10e568a",
+      "name": "[Phase 5] ISR 캐싱 최종 전환",
+      "description": "app/api/tech/route.ts와 app/api/tech/search/route.ts의 force-dynamic을 revalidate=60으로 교체. 모든 Route Handler ISR 설정 통일.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "b4e09fc7-e6e3-4894-819a-4fe85d5bdf06"
+        }
+      ],
+      "createdAt": "2026-05-07T14:17:58.695Z",
+      "updatedAt": "2026-05-07T14:17:58.695Z",
+      "relatedFiles": [
+        {
+          "path": "app/api/tech/route.ts",
+          "type": "TO_MODIFY",
+          "description": "force-dynamic 제거 → revalidate=60"
+        },
+        {
+          "path": "app/api/tech/search/route.ts",
+          "type": "TO_MODIFY",
+          "description": "force-dynamic 제거 → revalidate=60"
+        },
+        {
+          "path": "app/api/tech/[id]/route.ts",
+          "type": "REFERENCE",
+          "description": "이미 revalidate=60, 유지"
+        }
+      ],
+      "implementationGuide": "force-dynamic 제거 후 export const revalidate = 60 추가. searchParams를 사용하면서도 ISR이 적용되는지 Next.js 16 동작 확인 필요(Q5). 문제 시 캐시 전략 재검토.",
+      "verificationCriteria": "npm run build 후 /api/tech가 정적/ISR 라우트로 표시됨. 60초 후 Notion 변경사항 반영 확인.",
+      "analysisResult": "Phase 5 최적화 및 배포 — 미시작 상태. Phase 3+4 완료 후 진행."
+    },
+    {
+      "id": "b55d3bbb-b34e-4377-ad94-3e5751d8f660",
+      "name": "[Phase 5] 품질 검수 및 반응형 최종 확인",
+      "description": "Chrome DevTools 375px/768px/1280px 전 구간 레이아웃 확인, 다크모드 전 페이지 검수, Lighthouse 성능 점수 90점 이상 달성.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "ba2ce178-1859-4f04-90a0-4f97c10e568a"
+        }
+      ],
+      "createdAt": "2026-05-07T14:17:58.695Z",
+      "updatedAt": "2026-05-07T14:17:58.695Z",
+      "relatedFiles": [
+        {
+          "path": "app/page.tsx",
+          "type": "REFERENCE",
+          "description": "홈 페이지 반응형 확인"
+        },
+        {
+          "path": "app/category/[category]/page.tsx",
+          "type": "REFERENCE",
+          "description": "카테고리 페이지 반응형 확인"
+        },
+        {
+          "path": "app/tech/[id]/page.tsx",
+          "type": "REFERENCE",
+          "description": "상세 페이지 반응형 확인"
+        }
+      ],
+      "implementationGuide": "Chrome DevTools 기기 에뮬레이션: iPhone SE(375px), iPad(768px), 데스크탑(1280px). 다크모드 토글 후 모든 페이지 확인. Lighthouse: Performance 90점, Accessibility 90점 이상.",
+      "verificationCriteria": "모바일 1열/태블릿 2열/데스크탑 3열 그리드 정상. 다크모드 전 페이지 적용. Lighthouse 90점+.",
+      "analysisResult": "Phase 5 최적화 및 배포 — 미시작 상태. Phase 3+4 완료 후 진행."
+    },
+    {
+      "id": "fc680043-945b-4b45-82f5-dc0da95f8241",
+      "name": "[Phase 5] Vercel 배포 및 환경변수 등록",
+      "description": "Vercel 프로젝트에 NOTION_TOKEN, NOTION_DATABASE_ID, NEXT_PUBLIC_BASE_URL 환경변수 등록. 배포 후 전체 사용자 흐름(홈→카테고리→상세→검색) 검수. .env.local 미노출 확인.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "b55d3bbb-b34e-4377-ad94-3e5751d8f660"
+        }
+      ],
+      "createdAt": "2026-05-07T14:17:58.695Z",
+      "updatedAt": "2026-05-07T14:17:58.695Z",
+      "relatedFiles": [
+        {
+          "path": ".env.example",
+          "type": "REFERENCE",
+          "description": "배포 시 체크리스트 참고"
+        },
+        {
+          "path": ".gitignore",
+          "type": "REFERENCE",
+          "description": ".env.local 제외 확인"
+        }
+      ],
+      "implementationGuide": "Vercel Dashboard → Settings → Environment Variables에 3개 변수 등록. 배포 후 Production URL에서 전체 흐름 수동 테스트. git log에서 .env.local 미포함 확인.",
+      "verificationCriteria": "Vercel Production URL에서 홈→카테고리→상세→검색 전 흐름 정상. FCP 2초 이내. .env.local git 미포함.",
+      "analysisResult": "Phase 5 최적화 및 배포 — 미시작 상태. Phase 3+4 완료 후 진행."
+    }
+  ]
+}

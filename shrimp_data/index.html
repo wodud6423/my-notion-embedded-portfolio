@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shrimp Task Manager — Task Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222535;
+      --border: #2e3148;
+      --primary: #6c8ef5;
+      --primary-dim: #3a4a8a;
+      --success: #4ade80;
+      --warning: #facc15;
+      --muted: #64748b;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --pending: #6c8ef5;
+      --in-progress: #facc15;
+      --completed: #4ade80;
+      --blocked: #f87171;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 { font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: .5px; }
+    header span { font-size: 12px; color: var(--text-dim); }
+    .reload-btn {
+      background: var(--primary-dim);
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      padding: 5px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .reload-btn:hover { background: var(--primary); color: #fff; }
+
+    /* ── 레이아웃 ── */
+    .container { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }
+
+    /* ── Phase 섹션 헤더 (리스트 뷰) ── */
+    .phase-section-header {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      margin-top: 24px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .phase-section-header:first-child { margin-top: 0; }
+    .phase-section-header.phase-completed  { border-left-color: var(--completed); }
+    .phase-section-header.phase-in-progress { border-left-color: var(--in-progress); }
+    .phase-section-header.phase-pending    { border-left-color: var(--pending); }
+    .phase-section-title { font-size: 14px; font-weight: 700; }
+    .phase-section-title.phase-completed  { color: var(--completed); }
+    .phase-section-title.phase-in-progress { color: var(--in-progress); }
+    .phase-section-title.phase-pending    { color: var(--pending); }
+    .phase-progress-badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+
+    /* ── 다이어그램 레인 헤더 색상 ── */
+    .lane-label.phase-completed  { color: var(--completed); }
+    .lane-label.phase-in-progress { color: var(--in-progress); }
+    .lane-label.phase-pending    { color: var(--pending); }
+
+    /* ── 통계 배너 ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      text-align: center;
+    }
+    .stat-card .num { font-size: 28px; font-weight: 800; }
+    .stat-card .label { font-size: 11px; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+    .stat-card.total .num  { color: var(--text); }
+    .stat-card.pending .num    { color: var(--pending); }
+    .stat-card.progress .num   { color: var(--in-progress); }
+    .stat-card.completed .num  { color: var(--completed); }
+    .stat-card.blocked .num    { color: var(--blocked); }
+
+    /* ── 탭 ── */
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+    .tab {
+      padding: 7px 18px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .tab:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+
+    /* ── 다이어그램 뷰 ── */
+    #diagram-view { display: block; }
+    #list-view    { display: none; }
+
+    /* 의존성 그래프 */
+    .diagram-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      overflow-x: auto;
+    }
+    .diagram-title { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; }
+
+    /* 레인 레이아웃 */
+    .lanes {
+      display: flex;
+      gap: 0;
+      align-items: flex-start;
+      min-width: max-content;
+    }
+    .lane {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      min-width: 220px;
+      padding: 0 16px;
+      border-right: 1px dashed var(--border);
+      position: relative;
+    }
+    .lane:last-child { border-right: none; }
+    .lane-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    /* 태스크 노드 */
+    .task-node {
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      width: 200px;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+      position: relative;
+    }
+    .task-node:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent); }
+    .task-node.status-pending    { border-color: var(--pending); }
+    .task-node.status-in_progress { border-color: var(--in-progress); }
+    .task-node.status-completed  { border-color: var(--completed); }
+    .task-node.status-blocked    { border-color: var(--blocked); }
+
+    .node-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      padding: 2px 7px;
+      border-radius: 20px;
+      margin-bottom: 7px;
+    }
+    .badge-pending    { background: color-mix(in srgb, var(--pending) 20%, transparent);    color: var(--pending); }
+    .badge-in_progress{ background: color-mix(in srgb, var(--in-progress) 20%, transparent); color: var(--in-progress); }
+    .badge-completed  { background: color-mix(in srgb, var(--completed) 20%, transparent);  color: var(--completed); }
+    .badge-blocked    { background: color-mix(in srgb, var(--blocked) 20%, transparent);     color: var(--blocked); }
+
+    .node-name { font-size: 12px; font-weight: 600; line-height: 1.4; color: var(--text); }
+    .node-files { font-size: 10px; color: var(--text-dim); margin-top: 6px; }
+
+    /* 화살표 연결선 (CSS로 표현) */
+    .arrow-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-width: 40px;
+      color: var(--border);
+      font-size: 20px;
+      padding: 0 4px;
+    }
+
+    /* ── 리스트 뷰 ── */
+    .task-list { display: flex; flex-direction: column; gap: 16px; }
+    .task-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .task-card.status-pending     { border-left-color: var(--pending); }
+    .task-card.status-in_progress { border-left-color: var(--in-progress); }
+    .task-card.status-completed   { border-left-color: var(--completed); }
+    .task-card.status-blocked     { border-left-color: var(--blocked); }
+
+    .task-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .task-name { font-size: 15px; font-weight: 700; }
+    .task-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 12px; }
+
+    .task-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .meta-pill {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--surface2);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    /* 상세 패널 (클릭 시 펼침) */
+    .task-detail { display: none; border-top: 1px solid var(--border); margin-top: 14px; padding-top: 14px; }
+    .task-detail.open { display: block; }
+    .detail-section { margin-bottom: 14px; }
+    .detail-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; }
+    .detail-body { font-size: 13px; color: var(--text-dim); line-height: 1.7; white-space: pre-wrap; background: var(--surface2); border-radius: 6px; padding: 10px 14px; }
+
+    .file-list { display: flex; flex-direction: column; gap: 4px; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      padding: 4px 8px;
+      background: var(--surface2);
+      border-radius: 5px;
+    }
+    .file-type {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .ft-CREATE    { background: #1a3a2a; color: #4ade80; }
+    .ft-TO_MODIFY { background: #3a2a1a; color: #fb923c; }
+    .ft-REFERENCE { background: #1a2a3a; color: #60a5fa; }
+    .ft-DEPENDENCY{ background: #2a1a3a; color: #c084fc; }
+    .ft-OTHER     { background: #2a2a2a; color: #94a3b8; }
+    .file-path { font-family: monospace; color: var(--text); }
+
+    .dep-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .dep-chip {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--primary) 15%, transparent);
+      color: var(--primary);
+      border: 1px solid var(--primary-dim);
+    }
+
+    /* ── 모달 오버레이 (다이어그램 노드 클릭) ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 32px;
+      max-width: 640px;
+      width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .modal-title { font-size: 17px; font-weight: 700; }
+    .modal-close { background: none; border: none; color: var(--text-dim); font-size: 20px; cursor: pointer; padding: 0 4px; }
+    .modal-close:hover { color: var(--text); }
+
+    /* ── 반응형 ── */
+    @media (max-width: 768px) {
+      .lanes { flex-direction: column; }
+      .lane { border-right: none; border-bottom: 1px dashed var(--border); min-width: unset; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🦐 Shrimp Task Dashboard</h1>
+  <span id="last-updated"></span>
+  <button class="reload-btn" onclick="loadTasks()">↻ 새로고침</button>
+</header>
+
+<div class="container">
+  <!-- 통계 -->
+  <div class="stats" id="stats"></div>
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('diagram')">📊 의존성 다이어그램</button>
+    <button class="tab" onclick="switchTab('list')">📋 태스크 목록</button>
+  </div>
+
+  <!-- 다이어그램 뷰 -->
+  <div id="diagram-view">
+    <div class="diagram-wrap">
+      <div class="diagram-title">태스크 실행 순서 (왼쪽 → 오른쪽, 의존성 기반)</div>
+      <div class="lanes" id="diagram-lanes"></div>
+    </div>
+  </div>
+
+  <!-- 리스트 뷰 -->
+  <div id="list-view">
+    <div class="task-list" id="task-list"></div>
+  </div>
+</div>
+
+<!-- 모달 (다이어그램 노드 클릭) -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+  let allTasks = [];
+
+  const STATUS_LABEL = {
+    pending: '대기',
+    in_progress: '진행중',
+    completed: '완료',
+    blocked: '차단'
+  };
+
+  async function loadTasks() {
+    try {
+      const res = await fetch('./tasks.json?t=' + Date.now());
+      const data = await res.json();
+      allTasks = data.tasks || [];
+      document.getElementById('last-updated').textContent =
+        '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
+      render();
+    } catch (e) {
+      console.error('tasks.json 로드 실패:', e);
+    }
+  }
+
+  function render() {
+    renderStats();
+    renderDiagram();
+    renderList();
+  }
+
+  /* ── 통계 ── */
+  function renderStats() {
+    const counts = { total: allTasks.length, pending: 0, in_progress: 0, completed: 0, blocked: 0 };
+    allTasks.forEach(t => { if (counts[t.status] !== undefined) counts[t.status]++; });
+    document.getElementById('stats').innerHTML = `
+      <div class="stat-card total"><div class="num">${counts.total}</div><div class="label">전체</div></div>
+      <div class="stat-card pending"><div class="num">${counts.pending}</div><div class="label">대기</div></div>
+      <div class="stat-card progress"><div class="num">${counts.in_progress}</div><div class="label">진행중</div></div>
+      <div class="stat-card completed"><div class="num">${counts.completed}</div><div class="label">완료</div></div>
+      <div class="stat-card blocked"><div class="num">${counts.blocked}</div><div class="label">차단</div></div>
+    `;
+  }
+
+  /* ── Phase 이름 매핑 ── */
+  const PHASE_NAMES = {
+    1: '프로젝트 골격',
+    2: '공통 모듈',
+    3: '핵심 기능',
+    4: '추가 기능',
+    5: '최적화 및 배포'
+  };
+
+  /* ── task 이름 또는 의존성 체인에서 Phase 번호 추출 ── */
+  function extractPhase(task, idToTask, visited) {
+    visited = visited || new Set();
+    if (visited.has(task.id)) return null;
+    visited.add(task.id);
+
+    const match = task.name.match(/\[Phase\s*(\d+)\]/i);
+    if (match) return parseInt(match[1], 10);
+
+    const deps = (task.dependencies || []).map(d => d.taskId || d);
+    if (deps.length > 0) {
+      const parentPhases = deps
+        .filter(id => idToTask[id])
+        .map(id => extractPhase(idToTask[id], idToTask, new Set(visited)))
+        .filter(p => p !== null);
+      if (parentPhases.length > 0) return Math.max(...parentPhases);
+    }
+    return null; // Phase 접두사 없고 의존성도 없으면 미분류
+  }
+
+  /* ── Phase별 태스크 그룹핑 ── */
+  function groupByPhase(tasks) {
+    const idToTask = {};
+    tasks.forEach(t => { idToTask[t.id] = t; });
+
+    const phaseMap = {};
+    tasks.forEach(task => {
+      const phase = extractPhase(task, idToTask) ?? 0; // null → 0 (미분류)
+      if (!phaseMap[phase]) phaseMap[phase] = [];
+      phaseMap[phase].push(task);
+    });
+
+    return { phaseMap, idToTask };
+  }
+
+  /* ── Phase 상태 계산 ── */
+  function getPhaseState(tasks) {
+    const total = tasks.length;
+    const done  = tasks.filter(t => t.status === 'completed').length;
+    if (done === total) return 'completed';
+    if (done > 0)       return 'in-progress';
+    return 'pending';
+  }
+
+  /* ── 다이어그램 렌더링 ── */
+  function renderDiagram() {
+    const { phaseMap } = groupByPhase(allTasks);
+    const el = document.getElementById('diagram-lanes');
+    el.innerHTML = '';
+
+    const phases = Object.keys(phaseMap).map(Number).sort((a, b) => a - b);
+
+    phases.forEach((phaseNum, idx) => {
+      const tasks = phaseMap[phaseNum];
+      const total = tasks.length;
+      const done  = tasks.filter(t => t.status === 'completed').length;
+      const state = getPhaseState(tasks);
+      const icon  = state === 'completed' ? '✅' : state === 'in-progress' ? '🔄' : '⏳';
+      const labelClass = phaseNum === 0 ? 'lane-label' : `lane-label phase-${state}`;
+      const phaseLabel = phaseNum === 0 ? '⚠️ 미분류' : `Phase ${phaseNum}`;
+      const phaseName  = phaseNum === 0 ? '' : (PHASE_NAMES[phaseNum] ? ` — ${PHASE_NAMES[phaseNum]}` : '');
+
+      const laneDiv = document.createElement('div');
+      laneDiv.className = 'lane';
+      laneDiv.innerHTML = `<div class="${labelClass}">${phaseLabel}${phaseName}<br/>${phaseNum === 0 ? '⚠️' : icon} ${done}/${total}</div>`;
+
+      // completed 먼저, pending 나중 정렬
+      const sorted = [...tasks].sort((a, b) => {
+        const order = { completed: 0, in_progress: 1, pending: 2, blocked: 3 };
+        return (order[a.status] ?? 9) - (order[b.status] ?? 9);
+      });
+
+      sorted.forEach(task => {
+        const files = (task.relatedFiles || []).filter(f => f.type === 'CREATE').length;
+        const node = document.createElement('div');
+        node.className = `task-node status-${task.status}`;
+        // 이름에서 "[Phase N]" 접두사 제거하여 노드에 표시
+        const displayName = task.name.replace(/^\[Phase\s*\d+\]\s*/i, '');
+        node.innerHTML = `
+          <div class="node-badge badge-${task.status}">${STATUS_LABEL[task.status] || task.status}</div>
+          <div class="node-name">${displayName}</div>
+          ${files > 0 ? `<div class="node-files">📄 신규 ${files}개 파일</div>` : ''}
+        `;
+        node.onclick = () => openModal(task);
+        laneDiv.appendChild(node);
+      });
+
+      el.appendChild(laneDiv);
+
+      // 레인 사이 화살표
+      if (idx < phases.length - 1) {
+        const arrow = document.createElement('div');
+        arrow.className = 'arrow-col';
+        arrow.innerHTML = '→';
+        el.appendChild(arrow);
+      }
+    });
+  }
+
+  /* ── 리스트 렌더링 (Phase 섹션 헤더 포함) ── */
+  function renderList() {
+    const el = document.getElementById('task-list');
+    el.innerHTML = '';
+
+    const { phaseMap } = groupByPhase(allTasks);
+    const phases = Object.keys(phaseMap).map(Number).sort((a, b) => a - b);
+
+    // 전체 태스크에서 고유 인덱스를 위해 누적 카운터 사용
+    let globalIdx = 0;
+
+    phases.forEach(phaseNum => {
+      const tasks = phaseMap[phaseNum];
+      const total = tasks.length;
+      const done  = tasks.filter(t => t.status === 'completed').length;
+      const state = getPhaseState(tasks);
+      const icon  = state === 'completed' ? '✅' : state === 'in-progress' ? '🔄' : '⏳';
+      const stateLabel = state === 'completed' ? '완료' : state === 'in-progress' ? '진행 중' : '대기';
+      const phaseName  = phaseNum === 0 ? '' : (PHASE_NAMES[phaseNum] || '');
+      const phaseTitle = phaseNum === 0
+        ? `⚠️ 미분류 태스크`
+        : `${icon} Phase ${phaseNum}${phaseName ? ` — ${phaseName}` : ''}`;
+
+      // Phase 섹션 헤더
+      const header = document.createElement('div');
+      header.className = phaseNum === 0
+        ? 'phase-section-header phase-pending'
+        : `phase-section-header phase-${state}`;
+      header.innerHTML = `
+        <div class="phase-section-title ${phaseNum === 0 ? 'phase-pending' : `phase-${state}`}">
+          ${phaseTitle}
+        </div>
+        <span class="phase-progress-badge">${stateLabel} ${done}/${total}</span>
+      `;
+      el.appendChild(header);
+
+      // completed 먼저, pending 나중 정렬
+      const sorted = [...tasks].sort((a, b) => {
+        const order = { completed: 0, in_progress: 1, pending: 2, blocked: 3 };
+        return (order[a.status] ?? 9) - (order[b.status] ?? 9);
+      });
+
+      sorted.forEach(task => {
+        const idx = globalIdx++;
+        const deps = (task.dependencies || []).map(d => {
+          const depId = d.taskId || d;
+          const depTask = allTasks.find(t => t.id === depId);
+          return depTask ? depTask.name.replace(/^\[Phase\s*\d+\]\s*/i, '') : depId;
+        });
+
+        const files = (task.relatedFiles || []);
+        const fileHtml = files.map(f => `
+          <div class="file-item">
+            <span class="file-type ft-${f.type}">${f.type}</span>
+            <span class="file-path">${f.path}</span>
+          </div>
+        `).join('');
+
+        // 이름에서 "[Phase N]" 접두사 제거
+        const displayName = task.name.replace(/^\[Phase\s*\d+\]\s*/i, '');
+
+        const card = document.createElement('div');
+        card.className = `task-card status-${task.status}`;
+        card.innerHTML = `
+          <div class="task-card-header">
+            <div class="task-name">${displayName}</div>
+            <span class="node-badge badge-${task.status}">${STATUS_LABEL[task.status] || task.status}</span>
+          </div>
+          <div class="task-desc">${task.description}</div>
+          <div class="task-meta">
+            ${deps.length > 0 ? deps.map(d => `<span class="meta-pill">↳ ${d}</span>`).join('') : '<span class="meta-pill">의존성 없음</span>'}
+            <span class="meta-pill">📄 ${files.length}개 파일</span>
+            <span class="meta-pill">🕒 ${new Date(task.createdAt).toLocaleDateString('ko-KR')}</span>
+          </div>
+          <div class="task-detail" id="detail-${idx}">
+            ${task.notes ? `
+              <div class="detail-section">
+                <div class="detail-label">📝 Notes</div>
+                <div class="detail-body">${task.notes}</div>
+              </div>` : ''}
+            ${task.implementationGuide ? `
+              <div class="detail-section">
+                <div class="detail-label">🔧 구현 가이드</div>
+                <div class="detail-body">${task.implementationGuide}</div>
+              </div>` : ''}
+            ${task.verificationCriteria ? `
+              <div class="detail-section">
+                <div class="detail-label">✅ 검증 기준</div>
+                <div class="detail-body">${task.verificationCriteria}</div>
+              </div>` : ''}
+            ${files.length > 0 ? `
+              <div class="detail-section">
+                <div class="detail-label">📁 관련 파일</div>
+                <div class="file-list">${fileHtml}</div>
+              </div>` : ''}
+            ${deps.length > 0 ? `
+              <div class="detail-section">
+                <div class="detail-label">🔗 의존 태스크</div>
+                <div class="dep-list">${deps.map(d => `<span class="dep-chip">${d}</span>`).join('')}</div>
+              </div>` : ''}
+          </div>
+        `;
+        card.onclick = () => {
+          const detail = document.getElementById(`detail-${idx}`);
+          detail.classList.toggle('open');
+        };
+        el.appendChild(card);
+      });
+    });
+  }
+
+  /* ── 모달 ── */
+  function openModal(task) {
+    const deps = (task.dependencies || []).map(d => {
+      const depId = d.taskId || d;
+      const depTask = allTasks.find(t => t.id === depId);
+      return depTask ? depTask.name.replace(/^\[Phase\s*\d+\]\s*/i, '') : depId;
+    });
+    const displayName = task.name.replace(/^\[Phase\s*\d+\]\s*/i, '');
+    const files = (task.relatedFiles || []);
+    const fileHtml = files.map(f => `
+      <div class="file-item">
+        <span class="file-type ft-${f.type}">${f.type}</span>
+        <span class="file-path">${f.path}</span>
+      </div>
+    `).join('');
+
+    document.getElementById('modal-content').innerHTML = `
+      <div class="modal-header">
+        <div>
+          <span class="node-badge badge-${task.status}" style="margin-bottom:8px;display:inline-block">${STATUS_LABEL[task.status] || task.status}</span>
+          <div class="modal-title">${displayName}</div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">설명</div>
+        <div class="detail-body">${task.description}</div>
+      </div>
+      ${task.notes ? `<div class="detail-section"><div class="detail-label">📝 Notes</div><div class="detail-body">${task.notes}</div></div>` : ''}
+      ${task.implementationGuide ? `<div class="detail-section"><div class="detail-label">🔧 구현 가이드</div><div class="detail-body">${task.implementationGuide}</div></div>` : ''}
+      ${task.verificationCriteria ? `<div class="detail-section"><div class="detail-label">✅ 검증 기준</div><div class="detail-body">${task.verificationCriteria}</div></div>` : ''}
+      ${files.length > 0 ? `<div class="detail-section"><div class="detail-label">📁 관련 파일</div><div class="file-list">${fileHtml}</div></div>` : ''}
+      ${deps.length > 0 ? `<div class="detail-section"><div class="detail-label">🔗 의존 태스크</div><div class="dep-list">${deps.map(d=>`<span class="dep-chip">${d}</span>`).join('')}</div></div>` : ''}
+    `;
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal(e) {
+    if (!e || e.target === document.getElementById('modal')) {
+      document.getElementById('modal').classList.remove('open');
+    }
+  }
+
+  /* ── 탭 전환 ── */
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('diagram-view').style.display = tab === 'diagram' ? 'block' : 'none';
+    document.getElementById('list-view').style.display   = tab === 'list'    ? 'block' : 'none';
+  }
+
+  /* ── 초기 로드 + 30초 자동 갱신 ── */
+  loadTasks();
+  setInterval(loadTasks, 30000);
+</script>
+</body>
+</html>
