@@ -1,92 +1,134 @@
 import Link from "next/link"
-import { ArrowRight, Palette, Zap, Layout, Puzzle, Moon, Code } from "lucide-react"
+import { Suspense } from "react"
+import { ArrowRight, Cpu, Layers, Settings, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { HomeTechList } from "@/components/tech/home-tech-list"
+import { FilterBar } from "@/components/tech/filter-bar"
+import { TechGridSkeleton } from "@/components/tech/tech-card-skeleton"
+import { TECH_CATEGORIES, NOTION_REVALIDATE_SECONDS } from "@/lib/constants"
+import type { TechListResponse } from "@/types"
 
-const features = [
-  {
-    icon: Layout,
-    title: "레이아웃 시스템",
-    description: "Header, Footer, 반응형 모바일 메뉴가 포함된 완성된 레이아웃 구조",
+export const revalidate = 60
+
+// 카테고리별 설명 및 아이콘 매핑
+const categoryMeta: Record<string, { icon: React.ComponentType<{ className?: string }>; description: string }> = {
+  Kernel: {
+    icon: Cpu,
+    description: "Linux 커널 아키텍처, 프로세스 스케줄링, 메모리 관리",
   },
-  {
-    icon: Moon,
-    title: "다크 모드",
-    description: "라이트 / 다크 / 시스템 모드 자동 감지 및 localStorage 유지",
+  Driver: {
+    icon: Settings,
+    description: "GPIO, UART, I2C, SPI 등 디바이스 드라이버 개발",
   },
-  {
-    icon: Puzzle,
-    title: "shadcn/ui 컴포넌트",
-    description: "Badge, Card, Input, Dialog, Toast 등 즉시 사용 가능한 UI 컴포넌트",
+  RTOS: {
+    icon: Layers,
+    description: "FreeRTOS, Zephyr 기반 실시간 운영체제 응용",
   },
-  {
-    icon: Zap,
-    title: "커스텀 훅",
-    description: "useMediaQuery, useLocalStorage, useDebounce, useToast 등 유틸리티 훅",
+  Yocto: {
+    icon: BookOpen,
+    description: "Yocto Project 기반 임베디드 리눅스 빌드 시스템",
   },
-  {
-    icon: Palette,
-    title: "디자인 토큰",
-    description: "Tailwind CSS v4 기반 oklch 색상 시스템과 일관된 디자인 토큰",
-  },
-  {
-    icon: Code,
-    title: "TypeScript",
-    description: "엄격한 타입 정의와 공통 인터페이스로 안전한 개발 환경",
-  },
+}
+
+// 포트폴리오 기술 스택 배지 목록
+const techBadges = [
+  "Linux Kernel",
+  "Device Driver",
+  "FreeRTOS",
+  "Yocto",
+  "C/C++",
+  "ARM",
+  "I2C",
+  "SPI",
+  "UART",
+  "DMA",
 ]
 
-const stack = ["Next.js 16", "React 19", "TypeScript 5", "Tailwind CSS v4", "shadcn/ui", "lucide-react"]
+async function fetchInitialTechList(): Promise<TechListResponse> {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"
+  const res = await fetch(`${baseUrl}/api/tech`, {
+    next: { revalidate: NOTION_REVALIDATE_SECONDS },
+  })
+  if (!res.ok) throw new Error(`기술 목록 조회 실패: ${res.status}`)
+  return res.json() as Promise<TechListResponse>
+}
 
-export default function HomePage() {
+export default async function HomePage() {
+  let initialItems: TechListResponse["items"] = []
+  try {
+    const data = await fetchInitialTechList()
+    initialItems = data.items
+  } catch {
+    // Notion API 오류 시 빈 목록으로 폴백
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-16">
-      {/* Hero */}
+      {/* 히어로 섹션 */}
       <section className="mb-20 text-center">
-        <div className="mb-4 flex flex-wrap justify-center gap-2">
-          {stack.map((item) => (
-            <Badge key={item} variant="secondary">{item}</Badge>
+        <div className="mb-6 flex flex-wrap justify-center gap-2">
+          {techBadges.map((badge) => (
+            <Badge key={badge} variant="secondary">{badge}</Badge>
           ))}
         </div>
         <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">
-          모던 웹 스타터킷
+          임베디드 기술 포트폴리오
         </h1>
         <p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
-          빠르게 웹 개발을 시작할 수 있도록 구성된 Next.js 스타터킷입니다.
-          필요한 컴포넌트와 유틸리티가 모두 포함되어 있습니다.
+          Notion에 정리된 임베디드 시스템 기술 스택과 구현 경험을 확인하세요.
+          개념 설명부터 트러블슈팅까지 실무 역량을 한 곳에서 제공합니다.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Button asChild size="lg">
-            <Link href="/showcase">
-              컴포넌트 둘러보기
+            <Link href="/category/Kernel">
+              기술 스택 보기
               <ArrowRight className="size-4" />
             </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-              GitHub
-            </a>
           </Button>
         </div>
       </section>
 
-      {/* Features */}
-      <section>
-        <h2 className="mb-8 text-center text-2xl font-semibold">포함된 기능</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map(({ icon: Icon, title, description }) => (
-            <Card key={title} className="transition-shadow hover:shadow-md">
-              <CardHeader>
-                <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Icon className="size-5 text-primary" />
+      {/* 카테고리 섹션 */}
+      <section className="mb-16">
+        <h2 className="mb-8 text-center text-2xl font-semibold">카테고리별 기술 스택</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {TECH_CATEGORIES.filter((cat) => cat !== 'Other').map((category) => {
+            const meta = categoryMeta[category]
+            if (!meta) return null
+            const Icon = meta.icon
+            return (
+              <Link
+                key={category}
+                href={`/category/${category}`}
+                className="group rounded-xl border bg-card p-6 transition-shadow hover:shadow-md"
+              >
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                    <Icon className="size-5 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">{category}</h3>
                 </div>
-                <CardTitle className="text-base">{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
+                <p className="text-sm text-muted-foreground">{meta.description}</p>
+                <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                  자세히 보기
+                  <ArrowRight className="size-3" />
+                </div>
+              </Link>
+            )
+          })}
         </div>
+      </section>
+
+      {/* 전체 기술 스택 섹션 */}
+      <section>
+        <h2 className="mb-6 text-center text-2xl font-semibold">전체 기술 스택</h2>
+        <div className="mb-6">
+          <FilterBar />
+        </div>
+        <Suspense fallback={<TechGridSkeleton />}>
+          <HomeTechList initialItems={initialItems} />
+        </Suspense>
       </section>
     </div>
   )

@@ -18,10 +18,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Modern Starter",
-    template: "%s | Modern Starter",
+    default: "Embedded Portfolio",
+    template: "%s | Embedded Portfolio",
   },
-  description: "Next.js 모던 웹 스타터킷",
+  description: "임베디드 시스템 기술 역량을 Notion 기반으로 전달하는 포트폴리오",
 }
 
 export default function RootLayout({
