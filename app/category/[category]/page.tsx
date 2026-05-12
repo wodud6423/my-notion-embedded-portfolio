@@ -1,9 +1,12 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
+import type { PageObjectResponse } from "@notionhq/client"
 import { TechGrid } from "@/components/tech/tech-grid"
 import { TechGridSkeleton } from "@/components/tech/tech-card-skeleton"
-import { TECH_CATEGORIES, NOTION_REVALIDATE_SECONDS } from "@/lib/constants"
+import { TECH_CATEGORIES } from "@/lib/constants"
+import { getNotionClient, getNotionDatabaseId } from "@/lib/notion"
+import { mapPageToTechStack } from "@/lib/tech-mapper"
 import type { TechCategory, TechListResponse } from "@/types"
 
 // ISR 캐싱 설정 (60초 재검증)
@@ -30,12 +33,17 @@ export async function generateStaticParams() {
 }
 
 async function fetchTechByCategory(category: TechCategory): Promise<TechListResponse> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"
-  const res = await fetch(`${baseUrl}/api/tech?category=${category}`, {
-    next: { revalidate: NOTION_REVALIDATE_SECONDS },
+  const notion = getNotionClient()
+  const databaseId = getNotionDatabaseId()
+  const response = await notion.dataSources.query({
+    data_source_id: databaseId,
+    filter: { property: "Category", select: { equals: category } },
+    sorts: [{ property: "Importance", direction: "descending" }],
   })
-  if (!res.ok) throw new Error(`기술 목록 조회 실패: ${res.status}`)
-  return res.json() as Promise<TechListResponse>
+  const items = response.results
+    .filter((item): item is PageObjectResponse => item.object === "page")
+    .map(mapPageToTechStack)
+  return { items, total: items.length }
 }
 
 // 데이터 패칭 + 그리드 렌더링 서버 컴포넌트 (Suspense 경계 안쪽)

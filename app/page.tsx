@@ -1,12 +1,15 @@
 import Link from "next/link"
 import { Suspense } from "react"
 import { ArrowRight, Cpu, Layers, Settings, BookOpen } from "lucide-react"
+import type { PageObjectResponse } from "@notionhq/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { HomeTechList } from "@/components/tech/home-tech-list"
 import { FilterBar } from "@/components/tech/filter-bar"
 import { TechGridSkeleton } from "@/components/tech/tech-card-skeleton"
-import { TECH_CATEGORIES, NOTION_REVALIDATE_SECONDS } from "@/lib/constants"
+import { TECH_CATEGORIES } from "@/lib/constants"
+import { getNotionClient, getNotionDatabaseId } from "@/lib/notion"
+import { mapPageToTechStack } from "@/lib/tech-mapper"
 import type { TechListResponse } from "@/types"
 
 export const revalidate = 60
@@ -46,12 +49,16 @@ const techBadges = [
 ]
 
 async function fetchInitialTechList(): Promise<TechListResponse> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"
-  const res = await fetch(`${baseUrl}/api/tech`, {
-    next: { revalidate: NOTION_REVALIDATE_SECONDS },
+  const notion = getNotionClient()
+  const databaseId = getNotionDatabaseId()
+  const response = await notion.dataSources.query({
+    data_source_id: databaseId,
+    sorts: [{ property: "Importance", direction: "descending" }],
   })
-  if (!res.ok) throw new Error(`기술 목록 조회 실패: ${res.status}`)
-  return res.json() as Promise<TechListResponse>
+  const items = response.results
+    .filter((item): item is PageObjectResponse => item.object === "page")
+    .map(mapPageToTechStack)
+  return { items, total: items.length }
 }
 
 export default async function HomePage() {

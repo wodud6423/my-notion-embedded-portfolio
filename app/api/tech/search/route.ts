@@ -4,7 +4,7 @@ import { getNotionClient, getNotionDatabaseId } from "@/lib/notion"
 import { mapPageToTechStack } from "@/lib/tech-mapper"
 import type { SearchResponse } from "@/types"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 60
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
