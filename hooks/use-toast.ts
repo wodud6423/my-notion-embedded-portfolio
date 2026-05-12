@@ -8,9 +8,7 @@ type ToastSubscriber = (toasts: ToastItem[]) => void
 
 // globalThis를 사용해 Next.js 모듈 분할 환경에서도 단일 상태 공유
 declare global {
-  // eslint-disable-next-line no-var
   var __toastSubscribers: Set<ToastSubscriber> | undefined
-  // eslint-disable-next-line no-var
   var __toasts: ToastItem[] | undefined
 }
 
@@ -62,15 +60,15 @@ function removeToast(id: string) {
 }
 
 export function useToast() {
-  const [toastList, setToastList] = useState<ToastItem[]>([])
+  const [toastList, setToastList] = useState<ToastItem[]>(() => [...getToasts()])
 
   useEffect(() => {
+    // 외부 시스템(전역 toast 상태)의 변경을 구독하여 setState 호출
     const subscriber: ToastSubscriber = (newToasts) => {
       setToastList(newToasts)
     }
 
     getSubscribers().add(subscriber)
-    setToastList([...getToasts()])
 
     return () => {
       getSubscribers().delete(subscriber)
