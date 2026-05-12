@@ -4,7 +4,7 @@ import { getNotionClient, getNotionDatabaseId } from "@/lib/notion"
 import { mapPageToTechStack } from "@/lib/tech-mapper"
 import type { TechListResponse, TechCategory, Difficulty } from "@/types"
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
