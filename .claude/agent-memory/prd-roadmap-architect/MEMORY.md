@@ -1,0 +1,1 @@
+- [embedded-portfolio 프로젝트 현황](project_embedded_portfolio.md) — Notion CMS 포트폴리오 초기화 완료, Phase 2~5 남음

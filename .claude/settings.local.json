@@ -26,7 +26,21 @@
       "Bash(cp /c/Users/wodud/.claude/.env.slack \"/c/Users/wodud/workspace/courses/claude-nextjs-starters/.claude/.env.slack\")",
       "Bash(rm /c/Users/wodud/.claude/.env.slack)",
       "Bash(rm /c/Users/wodud/.claude/hooks/slack-permission-notify.sh)",
-      "Bash(rm /c/Users/wodud/.claude/hooks/slack-stop-notify.sh)"
+      "Bash(rm /c/Users/wodud/.claude/hooks/slack-stop-notify.sh)",
+      "PowerShell(Rename-Item *)",
+      "PowerShell(Head *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\wodud\\\\workspace\\\\courses\\\\embedded-portfolio\" -Recurse -Depth 3 | Where-Object { -not $_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize -Wrap)",
+      "PowerShell(New-Item *)",
+      "PowerShell(Get-Content *)",
+      "mcp__shrimp-task-manager__init_project_rules",
+      "mcp__shrimp-task-manager__process_thought",
+      "mcp__shrimp-task-manager__plan_task",
+      "mcp__shrimp-task-manager__analyze_task",
+      "mcp__shrimp-task-manager__reflect_task",
+      "mcp__shrimp-task-manager__split_tasks",
+      "mcp__shrimp-task-manager__list_tasks",
+      "mcp__shrimp-task-manager__execute_task",
+      "mcp__shrimp-task-manager__verify_task"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -64,6 +78,26 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/slack-stop-notify.sh\"",
             "timeout": 190
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__shrimp-task-manager__verify_task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[ROADMAP SYNC REQUIRED] shrimp 태스크가 완료되었습니다. prd-roadmap-architect 에이전트를 호출하여 docs/ROADMAP.md를 동기화하세요.'"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__shrimp-task-manager__execute_task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[ROADMAP SYNC REMINDER] 태스크 실행 완료 후 verify_task로 검증하고, docs/ROADMAP.md를 업데이트하는 것을 잊지 마세요.'"
           }
         ]
       }

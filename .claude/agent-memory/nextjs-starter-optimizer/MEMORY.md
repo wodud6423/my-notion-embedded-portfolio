@@ -1,0 +1,3 @@
+- [프로젝트 목적](project_purpose.md) — 임베디드 포트폴리오: Notion CMS 기반, PRD 문서 존재
+- [기술 스택 특이사항](project_tech_notes.md) — @notionhq/client v5 API 변경점, Next.js 16 revalidate 주의사항
+- [제거된 데모 코드](removed_boilerplate.md) — showcase 페이지, 스타터킷 홈 콘텐츠 제거 내역
