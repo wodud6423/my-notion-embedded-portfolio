@@ -1,7 +1,9 @@
 import Link from "next/link"
+import { Suspense } from "react"
 import { NavLinks } from "@/components/layout/nav-links"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { MobileMenu } from "@/components/layout/mobile-menu"
+import { SearchInput } from "@/components/layout/search-input"
 import { SITE_CONFIG } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 
@@ -28,6 +30,9 @@ export function Header({ className }: HeaderProps) {
 
         <div className="hidden items-center gap-2 md:flex">
           <NavLinks items={SITE_CONFIG.navItems} />
+          <Suspense>
+            <SearchInput className="w-48" />
+          </Suspense>
           <ThemeToggle />
         </div>
 

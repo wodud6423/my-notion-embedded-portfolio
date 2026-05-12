@@ -31,33 +31,40 @@ function resolveTheme(theme: Theme): 'light' | 'dark' {
 
 const VALID_THEMES = ['light', 'dark', 'system'] as const
 
+// 로컬스토리지에서 저장된 테마를 읽어 초기값으로 사용 (지연 초기화)
+function getInitialTheme(storageKey: string, defaultTheme: Theme): Theme {
+  if (typeof window === 'undefined') return defaultTheme
+  const stored = localStorage.getItem(storageKey)
+  if (stored && (VALID_THEMES as readonly string[]).includes(stored)) {
+    return stored as Theme
+  }
+  return defaultTheme
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
   storageKey = THEME_STORAGE_KEY,
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = React.useState<Theme>(defaultTheme)
+  // 지연 초기화로 localStorage 값을 초기 상태로 직접 사용
+  const [theme, setThemeState] = React.useState<Theme>(() =>
+    getInitialTheme(storageKey, defaultTheme)
+  )
+  // mounted는 렌더링에 영향을 주지 않는 hydration 마커이므로 ref 사용
+  const mountedRef = React.useRef(false)
   const [mounted, setMounted] = React.useState(false)
 
+  // DOM 클래스 업데이트 (외부 시스템 동기화) + 마운트 상태 초기화
   React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // 저장된 테마 로드
-  React.useEffect(() => {
-    const stored = localStorage.getItem(storageKey)
-    if (stored && (VALID_THEMES as readonly string[]).includes(stored)) {
-      setThemeState(stored as Theme)
+    if (!mountedRef.current) {
+      mountedRef.current = true
+      setMounted(true)
     }
-  }, [storageKey])
-
-  // DOM 업데이트
-  React.useEffect(() => {
     const resolved = resolveTheme(theme)
     document.documentElement.classList.toggle('dark', resolved === 'dark')
   }, [theme])
 
-  // 시스템 테마 변경 감지
+  // 시스템 테마 변경 감지 (외부 이벤트 구독)
   React.useEffect(() => {
     if (theme !== 'system') return
 

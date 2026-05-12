@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { SITE_CONFIG, SOCIAL_LINKS } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 
