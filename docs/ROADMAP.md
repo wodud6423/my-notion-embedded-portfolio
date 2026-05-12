@@ -1,19 +1,19 @@
 # ROADMAP — Embedded Tech Portfolio
 
-> 마지막 업데이트: 2026-05-07 | PRD 기반 버전: v1.0 (MVP)
+> 마지막 업데이트: 2026-05-12 | PRD 기반 버전: v1.0 (MVP)
 
 ---
 
 ## 진행 현황
 
-전체 5개 Phase 중 2개 완료 + 2개 부분 완료 (약 60%)
+전체 5개 Phase 중 3개 완료 + 1개 부분 완료 (약 80%)
 
 | Phase | 제목 | 상태 | 완료율 |
 |-------|------|------|--------|
 | Phase 1 | 프로젝트 골격 | 완료 | 100% |
 | Phase 2 | 공통 모듈 | 완료 | 100% |
-| Phase 3 | 핵심 기능 | 부분 완료 | ~55% |
-| Phase 4 | 추가 기능 | 부분 완료 | ~40% |
+| Phase 3 | 핵심 기능 | 완료 | 100% |
+| Phase 4 | 추가 기능 | 부분 완료 | ~33% |
 | Phase 5 | 최적화 및 배포 | 미시작 | 0% |
 
 ---
@@ -26,17 +26,31 @@
 
 ### 작업 내용
 
-- [x] Next.js 15 (App Router) 프로젝트 초기화
-- [x] TypeScript 5.6+ 설정 (`tsconfig.json`, `@/*` 경로 별칭)
-- [x] Tailwind CSS v4 설정 (postcss 방식, `tailwind.config.*` 없음)
-- [x] shadcn/ui 초기화 (radix-nova 스타일, oklch 색상 시스템, `components.json`)
-- [x] `app/globals.css` — CSS 커스텀 속성 기반 디자인 토큰 정의
-- [x] `next.config.ts` — Next.js 설정 (이미지 최적화 등)
-- [x] `.env.local` + `.env.example` 환경변수 파일 구성
-- [x] `app/layout.tsx` — 루트 레이아웃 (Geist 폰트, ThemeProvider, Toaster)
-- [x] `app/error.tsx` — 런타임 오류 페이지 (클라이언트 컴포넌트)
-- [x] `app/not-found.tsx` — 404 페이지
-- [x] `.gitignore` — `.env.local` 포함 여부 확인
+- [x] **[Phase 1] Next.js 프로젝트 초기화 및 TypeScript 설정**
+  - [x] `tsconfig.json` — strict 모드, `@/*` 경로 별칭
+  - [x] `next.config.ts` — Turbopack, 이미지 remotePatterns
+  - [x] `postcss.config.mjs` — Tailwind CSS v4 postcss 방식
+
+- [x] **[Phase 1] Tailwind CSS v4 및 shadcn/ui 초기화**
+  - [x] `app/globals.css` — oklch 기반 CSS 커스텀 속성 (라이트/다크 토큰)
+  - [x] `components.json` — shadcn/ui radix-nova 스타일 설정
+
+- [x] **[Phase 1] 환경변수 및 보안 설정**
+  - [x] `.env.example` — NOTION_TOKEN, NOTION_DATABASE_ID, NEXT_PUBLIC_BASE_URL 문서화
+  - [x] `.gitignore` — `.env.local` 포함 확인
+
+- [x] **[Phase 1] 루트 레이아웃 및 공통 레이아웃 컴포넌트**
+  - [x] `app/layout.tsx` — Geist 폰트, ThemeProvider, Header, Footer, Toaster
+  - [x] `components/providers/theme-provider.tsx` — 라이트/다크/시스템 토글
+  - [x] `components/layout/header.tsx` — 스티키 헤더, 네비게이션
+  - [x] `components/layout/footer.tsx` — 저작권, 소셜 링크
+  - [x] `components/layout/nav-links.tsx` — 네비게이션 링크
+  - [x] `components/layout/mobile-menu.tsx` — 모바일 햄버거 메뉴
+  - [x] `components/layout/theme-toggle.tsx` — 테마 토글
+
+- [x] **[Phase 1] 오류 페이지 및 404 페이지**
+  - [x] `app/error.tsx` — `'use client'`, reset()/홈이동 버튼
+  - [x] `app/not-found.tsx` — 404 안내 + 홈이동 버튼
 
 ### 예상 소요 시간
 
@@ -59,44 +73,25 @@
 
 ### 작업 내용
 
-#### Notion 데이터 계층
+- [x] **[Phase 2] Notion 데이터 계층 구현**
+  - [x] `lib/notion.ts` — Notion 클라이언트 싱글턴 (환경변수 검증 포함)
+  - [x] `lib/tech-mapper.ts` — Notion API 응답 → `TechStack` 타입 변환 (7개 함수)
+  - [x] `lib/block-parser.ts` — Notion 블록 → 섹션 분리 (한/영 모두 지원)
+  - [x] `lib/constants.ts` — 사이트 설정, 카테고리 목록, 난이도 레이블
+  - [x] `lib/utils.ts` — `cn()` className 병합 유틸리티
 
-- [x] `lib/notion.ts` — Notion 클라이언트 싱글턴 (환경변수 검증 포함)
-- [x] `lib/tech-mapper.ts` — Notion API 응답 → `TechStack` 타입 변환 (7개 함수)
-- [x] `lib/block-parser.ts` — Notion 페이지 블록 → `{concept, implementation, troubleshooting}` 섹션 분리 (한/영 모두 지원)
-- [x] `lib/constants.ts` — 사이트 설정, 카테고리 목록, 난이도 레이블
-- [x] `lib/utils.ts` — `cn()` className 병합 유틸리티
+- [x] **[Phase 2] TypeScript 타입 정의**
+  - [x] `types/index.ts` — `TechStack`, `TechStackDetail`, `TechListResponse`, `SearchResponse`, `TechCategory`, `Difficulty`, `NotionBlock`, `FilterState` 등 완성
 
-#### 타입 정의
+- [x] **[Phase 2] 커스텀 훅 및 상태 관리**
+  - [x] `hooks/use-debounce.ts` — 입력 지연 처리 (검색 최적화용)
+  - [x] `hooks/use-local-storage.ts` — LocalStorage 상태 동기화
+  - [x] `hooks/use-media-query.ts` — 반응형 브레이크포인트 감지
+  - [x] `hooks/use-toast.ts` — 토스트 알림 상태 관리
+  - [x] `store/filter-store.ts` — Zustand 스토어 (카테고리/태그/난이도/검색 필터, `resetFilters`)
 
-- [x] `types/index.ts` — 9개 인터페이스 완성
-  - `TechStack`, `TechStackDetail`, `TechListResponse`
-  - `TechDetailResponse`, `SearchResponse`
-  - `TechCategory`, `Difficulty`
-  - `NotionBlock`, `BlockSection`
-
-#### 커스텀 훅
-
-- [x] `hooks/use-debounce.ts` — 입력 지연 처리 (검색 최적화용)
-- [x] `hooks/use-local-storage.ts` — LocalStorage 상태 동기화
-- [x] `hooks/use-media-query.ts` — 반응형 브레이크포인트 감지
-- [x] `hooks/use-toast.ts` — 토스트 알림 상태 관리
-
-#### 상태 관리
-
-- [x] `store/filter-store.ts` — Zustand 스토어 (카테고리/태그/난이도/검색 필터, `resetFilters`)
-
-#### 레이아웃 컴포넌트
-
-- [x] `components/layout/header.tsx` — 스티키 헤더, 네비게이션, 테마 토글
-- [x] `components/layout/footer.tsx` — 저작권, 소셜 링크
-- [x] `components/layout/nav-links.tsx` — 내비게이션 링크 렌더링
-- [x] `components/layout/mobile-menu.tsx` — 모바일 햄버거 메뉴
-- [x] `components/layout/theme-toggle.tsx` — 라이트/다크/시스템 토글
-
-#### shadcn/ui 컴포넌트 (재사용 UI 기반)
-
-- [x] `components/ui/` — badge, button, card, dialog, input, select, skeleton, tabs, toast 등 16개 컴포넌트
+- [x] **[Phase 2] shadcn/ui 컴포넌트 설치**
+  - [x] `components/ui/` — alert, badge, button, card, checkbox, dialog, input, label, radio-group, select, skeleton, tabs, toast, toaster, tooltip, switch 등 16개 컴포넌트
 
 ### 예상 소요 시간
 
@@ -120,39 +115,43 @@
 
 ### 작업 내용
 
-#### API Route Handler
+- [x] **[Phase 3] API Route Handler 구현**
+  - [x] `app/api/tech/route.ts` — `GET /api/tech` (카테고리/태그/난이도 필터, 중요도 내림차순 정렬)
+  - [x] `app/api/tech/[id]/route.ts` — `GET /api/tech/[id]` (상세 메타 + Notion 블록 파싱, ISR 60초)
+  - [x] `app/api/tech/search/route.ts` — `GET /api/tech/search?q=` (Title OR Summary 키워드 검색)
 
-- [x] `app/api/tech/route.ts` — `GET /api/tech` (카테고리/난이도/태그 필터, 중요도 내림차순 정렬, ISR 60초)
-- [x] `app/api/tech/[id]/route.ts` — `GET /api/tech/[id]` (상세 메타 + Notion 블록 파싱 포함, ISR 60초)
-- [x] `app/api/tech/search/route.ts` — `GET /api/tech/search?q=` (Title OR Summary 키워드 검색, ISR 60초)
+- [x] **[Phase 3] TechCard 컴포넌트 및 카테고리 페이지**
+  - [x] `components/tech/tech-card.tsx` — 난이도 배지, 중요도 별, 태그 5개+더보기, 카드 클릭 → 상세 이동
+  - [x] `app/category/[category]/page.tsx` — ISR 60초, `generateStaticParams`, TechGrid로 리팩터링
 
-#### 기술 카드 컴포넌트
+- [x] **[Phase 3] shiki 패키지 설치 및 TechGrid 컴포넌트 생성**
+  - [x] `package.json` — shiki 패키지 설치 (코드 하이라이팅 사전 준비)
+  - [x] `components/tech/tech-grid.tsx` — TechGrid 컴포넌트 (Empty State, 반응형 그리드 `sm:grid-cols-2 lg:grid-cols-3`)
+  - [x] `app/category/[category]/page.tsx` — TechGrid 컴포넌트로 리팩터링 완료
+  - [x] `app/search/page.tsx` — TechGrid 교체 완료 (`hasNoResult` 변수로 중복 조건 통합)
 
-- [x] `components/tech/tech-card.tsx` — `TechCard` 컴포넌트 (난이도 배지, 중요도 별, 태그 5개 + 더보기, 카드 클릭 → 상세 페이지 이동)
+- [x] **[Phase 3] HomeTechList 클라이언트 컴포넌트 생성**
+  - [x] `components/tech/home-tech-list.tsx` — `'use client'`, `initialItems: TechStack[]` props, `useFilterStore()` 구독, 필터 변경 시 `/api/tech` 재요청, 오류 시 기존 items 유지
 
-#### 기술 목록 페이지
+- [x] **[Phase 3] 홈 페이지 Notion 실제 데이터 연동**
+  - [x] `app/page.tsx` — `async` 서버 컴포넌트 전환, `export const revalidate = 60`, `fetchInitialTechList()`로 초기 fetch, "전체 기술 스택" 섹션 추가 → `<HomeTechList initialItems={...} />`
 
-- [x] `app/category/[category]/page.tsx` — 카테고리 페이지 (ISR 60초, `generateStaticParams`, Empty State UI)
-- [ ] `app/page.tsx` — **홈 페이지 Notion 실제 데이터 연동**
-  - 현재 정적 히어로 섹션 + 4개 카테고리 링크 카드만 존재
-  - `/api/tech` 호출하여 전체 기술 카드 그리드 렌더링으로 교체
-  - 서버 컴포넌트에서 초기 데이터 fetch (FCP 보장)
-  - 반응형 그리드: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
-  - 클라이언트 컴포넌트 분리: `HomeTechList` (필터 상태 구독, API 재요청)
+- [x] **[Phase 3] NotionBlockRenderer 기본 블록 컴포넌트 구현**
+  - [x] `components/tech/notion-renderer/NotionBlockRenderer.tsx` — 블록 타입 분기 진입점, `renderRichText` 헬퍼, bulleted/numbered list 그룹화
+  - [x] `components/tech/notion-renderer/ParagraphBlock.tsx` — 단락 (Rich text → bold/italic/code 변환)
+  - [x] `components/tech/notion-renderer/HeadingBlock.tsx` — H1→h2 / H2→h3 / H3→h4 (페이지 h2 섹션명과 충돌 방지)
+  - [x] `components/tech/notion-renderer/BulletedListBlock.tsx` — 글머리 기호 목록 (`<ul>`)
+  - [x] `components/tech/notion-renderer/NumberedListBlock.tsx` — 번호 목록 (`<ol>`, 연속 블록 그룹화)
+  - [x] `components/tech/notion-renderer/QuoteBlock.tsx` — 인용구 (좌측 border + italic)
+  - [x] `components/tech/notion-renderer/DividerBlock.tsx` — 구분선
+  - [x] `components/tech/notion-renderer/UnsupportedBlock.tsx` — 미지원 블록 폴백 (dev 환경에서만 표시)
 
-#### Notion 블록 렌더러
+- [x] **[Phase 3] CalloutBlock 및 CodeBlock(shiki) 구현**
+  - [x] `components/tech/notion-renderer/CalloutBlock.tsx` — shadcn/ui `Alert` 활용, emoji 아이콘 지원
+  - [x] `components/tech/notion-renderer/CodeBlock.tsx` — async 서버 컴포넌트, shiki `codeToHtml` github-dark 테마, C/C++/Shell/Bash/Python/Makefile 지원, 미지원 언어 plaintext 폴백
 
-- [ ] `components/tech/notion-renderer/NotionBlockRenderer.tsx` — 블록 타입 분기 진입점
-- [ ] `components/tech/notion-renderer/ParagraphBlock.tsx` — 단락 (Rich text → bold/italic/code 변환)
-- [ ] `components/tech/notion-renderer/HeadingBlock.tsx` — H1 / H2 / H3
-- [ ] `components/tech/notion-renderer/BulletedListBlock.tsx` — 글머리 기호 목록
-- [ ] `components/tech/notion-renderer/NumberedListBlock.tsx` — 번호 목록
-- [ ] `components/tech/notion-renderer/CodeBlock.tsx` — 코드 블록 (`shiki` 서버 사이드 하이라이팅 권장, C/C++/Shell/Python/Makefile 지원)
-- [ ] `components/tech/notion-renderer/QuoteBlock.tsx` — 인용구
-- [ ] `components/tech/notion-renderer/CalloutBlock.tsx` — 콜아웃 (shadcn/ui `Alert` 활용)
-- [ ] `components/tech/notion-renderer/DividerBlock.tsx` — 구분선
-- [ ] `components/tech/notion-renderer/UnsupportedBlock.tsx` — 미지원 블록 폴백 처리
-- [ ] `app/tech/[id]/page.tsx` — 플레이스홀더 제거, `NotionBlockRenderer` 실제 연결
+- [x] **[Phase 3] 기술 상세 페이지 NotionBlockRenderer 연결**
+  - [x] `app/tech/[id]/page.tsx` — 플레이스홀더 div 제거, `<NotionBlockRenderer blocks={...} />` 연결 (개념/구현 경험/트러블슈팅 3개 섹션)
 
 ### 예상 소요 시간
 
@@ -183,7 +182,7 @@ Rich text의 `annotations` (bold, italic, code, strikethrough)는 인라인 `<st
 
 ### 완료 기준
 
-- [ ] `localhost:3000` 홈 페이지에서 Notion 데이터베이스의 실제 기술 카드가 렌더링됨
+- [x] `localhost:3000` 홈 페이지에서 Notion 데이터베이스의 실제 기술 카드가 렌더링됨
 - [ ] `/tech/[id]` 페이지에서 개념, 구현 경험, 트러블슈팅 섹션 내용이 실제로 표시됨
 - [ ] 코드 블록에 C, Shell 언어 구문 강조 정상 적용
 - [ ] 미지원 Notion 블록이 있어도 페이지가 깨지지 않음 (폴백 처리 확인)
@@ -200,29 +199,18 @@ Rich text의 `annotations` (bold, italic, code, strikethrough)는 인라인 `<st
 
 ### 작업 내용
 
-#### 필터 UI
+- [x] **[Phase 4] Zustand 필터 스토어 및 검색 API (완료)**
+  - [x] `store/filter-store.ts` — `setCategory` / `toggleTag` / `setDifficulty` / `resetFilters`
+  - [x] `app/api/tech/search/route.ts` — 키워드 검색 Route Handler
+  - [x] `hooks/use-debounce.ts` — 300ms 디바운스
 
-- [x] `store/filter-store.ts` — Zustand 스토어 (이미 완성, `setCategory` / `toggleTag` / `setDifficulty` / `resetFilters`)
-- [ ] `components/tech/filter-bar.tsx` — 필터 UI 컴포넌트 신규 구현
-  - shadcn/ui `Tabs`로 카테고리 탭 (전체 / Kernel / Driver / RTOS / Yocto)
-  - 태그 멀티 선택 토글 버튼 (`useFilterStore().toggleTag` 연결)
-  - 난이도 `Select` 드롭다운 (`useFilterStore().setDifficulty` 연결)
-  - 필터 초기화 버튼 (`useFilterStore().resetFilters` 연결)
-- [ ] `app/page.tsx` — `FilterBar` 통합 (필터 상태 변경 시 `/api/tech?category=...&tags=...` 재요청)
+- [ ] **[Phase 4] FilterBar 컴포넌트 구현**
+  - [ ] `components/tech/filter-bar.tsx` — shadcn/ui `Tabs` 카테고리 탭, 태그 멀티 선택 토글, 난이도 `Select`, 필터 초기화 버튼
+  - [ ] `app/page.tsx` — `FilterBar` 통합 (필터 변경 시 `/api/tech` 재요청)
 
-#### 검색 UI
-
-- [x] `hooks/use-debounce.ts` — 이미 완성
-- [x] `app/api/tech/search/route.ts` — 이미 완성
-- [ ] `components/layout/search-input.tsx` — 검색 입력 컴포넌트
-  - shadcn/ui `Input` + 검색 아이콘 버튼
-  - `useDebounce` 300ms 적용
-  - 엔터/버튼 클릭 시 `/search?q=[keyword]`로 라우팅
-- [ ] `app/search/page.tsx` — 실제 API 호출 연결
-  - `searchParams.q` 추출 → `/api/tech/search?q=` 호출
-  - 결과 카드 그리드 (Phase 3의 `TechGrid` 재사용)
-  - Empty State UI ("검색 결과가 없습니다" + 홈 이동 버튼)
-  - 검색어 헤딩 + 결과 수 표시
+- [ ] **[Phase 4] SearchInput 컴포넌트 및 검색 결과 페이지 연결**
+  - [ ] `components/layout/search-input.tsx` — shadcn/ui `Input` + 검색 아이콘, `useDebounce` 300ms, `/search?q=` 라우팅
+  - [ ] `app/search/page.tsx` — 실제 API 호출 연결, Empty State UI, 검색어 헤딩 + 결과 수 표시
 
 ### 예상 소요 시간
 
@@ -248,31 +236,26 @@ Rich text의 `annotations` (bold, italic, code, strikethrough)는 인라인 `<st
 
 ### 작업 내용
 
-#### 로딩 UX
+- [ ] **[Phase 5] 로딩 스켈레톤 UI 및 Suspense 적용**
+  - [ ] `components/tech/tech-card-skeleton.tsx` — TechCard와 동일 크기, shadcn/ui `Skeleton`
+  - [ ] `app/page.tsx` — `Suspense` + 스켈레톤 적용
+  - [ ] `app/category/[category]/page.tsx` — `Suspense` + 스켈레톤 적용
+  - [ ] `app/search/page.tsx` — `Suspense` + 스켈레톤 적용
 
-- [ ] `components/tech/tech-card-skeleton.tsx` — `TechCard`와 동일한 크기의 스켈레톤 UI (shadcn/ui `Skeleton` 사용)
-- [ ] `app/page.tsx` — `Suspense` + 스켈레톤 적용
-- [ ] `app/category/[category]/page.tsx` — `Suspense` + 스켈레톤 적용
-- [ ] `app/search/page.tsx` — `Suspense` + 스켈레톤 적용
+- [ ] **[Phase 5] ISR 캐싱 최종 전환**
+  - [ ] `app/api/tech/route.ts` — `force-dynamic` 제거, `export const revalidate = 60` 적용
+  - [ ] `app/api/tech/search/route.ts` — `force-dynamic` 제거, `export const revalidate = 60` 적용
+  - [ ] 페이지 레벨 `export const revalidate = 60` 유지 확인
 
-#### ISR 캐싱 최종 확인
+- [ ] **[Phase 5] 품질 검수 및 반응형 최종 확인**
+  - [ ] Chrome DevTools: 375px(iPhone SE) / 768px(iPad) / 1280px(데스크탑) 전 구간 레이아웃 확인
+  - [ ] 다크모드 전체 페이지 적용 여부 최종 검수
+  - [ ] Lighthouse 성능 점수 90점 이상 달성
 
-- [ ] `app/api/tech/route.ts` — `export const revalidate = 60` 적용 (`force-dynamic` 제거)
-- [ ] `app/api/tech/[id]/route.ts` — `export const revalidate = 60` 적용
-- [ ] `app/api/tech/search/route.ts` — `export const revalidate = 60` 적용
-- [ ] 페이지 레벨 `export const revalidate = 60` 유지 확인
-
-#### 품질 검수
-
-- [ ] Chrome DevTools: 375px(iPhone SE) / 768px(iPad) / 1280px(데스크탑) 전 구간 레이아웃 확인
-- [ ] 다크모드 전체 페이지 적용 여부 최종 검수
-- [ ] Lighthouse 성능 점수 90점 이상 달성
-
-#### Vercel 배포
-
-- [ ] Vercel 프로젝트 설정에 환경변수 등록 (`NOTION_TOKEN`, `NOTION_DATABASE_ID`, `NEXT_PUBLIC_BASE_URL`)
-- [ ] 배포 후 전체 사용자 흐름 검수 (홈 → 카테고리 → 상세 → 검색)
-- [ ] `.env.local`이 저장소에 노출되지 않음 확인
+- [ ] **[Phase 5] Vercel 배포 및 환경변수 등록**
+  - [ ] Vercel 프로젝트에 `NOTION_TOKEN`, `NOTION_DATABASE_ID`, `NEXT_PUBLIC_BASE_URL` 등록
+  - [ ] 배포 후 전체 사용자 흐름 검수 (홈 → 카테고리 → 상세 → 검색)
+  - [ ] `.env.local` 미노출 확인
 
 ### 예상 소요 시간
 
