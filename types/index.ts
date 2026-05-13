@@ -103,3 +103,48 @@ export interface FilterState {
   difficulty: Difficulty | null
   searchKeyword: string
 }
+
+// Notion 페이지 메타 (트리 탐색용)
+export interface NotionPageMeta {
+  id: string
+  title: string
+  parentId: string
+  depth: number
+  notionUrl: string
+}
+
+// 캐시된 기술 스택 (Notion URL 포함)
+export interface CachedTechStack extends TechStack {
+  notionPageId: string
+  notionUrl: string
+}
+
+// 기술 캐시 파일 구조
+export interface TechCacheFile {
+  updatedAt: string
+  updatedSummary: string
+  items: CachedTechStack[]
+}
+
+// PDF 파일 메타
+export interface PdfFileMeta {
+  type: 'resume' | 'portfolio'
+  url: string
+  uploadedAt: string
+  fileName: string
+}
+
+// PDF 메타 파일 구조
+export interface PdfMetaFile {
+  resume: PdfFileMeta | null
+  portfolio: PdfFileMeta | null
+}
+
+// 관리자 분석 응답
+export interface AdminAnalyzeResponse {
+  success: boolean
+  updatedAt: string
+  updatedSummary: string
+  itemCount: number
+  error?: string
+}

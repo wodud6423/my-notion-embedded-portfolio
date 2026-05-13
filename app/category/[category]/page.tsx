@@ -1,22 +1,18 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
-import type { PageObjectResponse } from "@notionhq/client"
 import { TechGrid } from "@/components/tech/tech-grid"
 import { TechGridSkeleton } from "@/components/tech/tech-card-skeleton"
 import { TECH_CATEGORIES } from "@/lib/constants"
-import { getNotionClient, getNotionDatabaseId } from "@/lib/notion"
-import { mapPageToTechStack } from "@/lib/tech-mapper"
+import { getTechCacheItems } from "@/lib/tech-cache"
 import type { TechCategory, TechListResponse } from "@/types"
 
-// ISR 캐싱 설정 (60초 재검증)
 export const revalidate = 60
 
 interface PageProps {
   params: Promise<{ category: string }>
 }
 
-// 카테고리별 동적 메타데이터 생성
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category } = await params
   return {
@@ -25,7 +21,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-// 빌드 시 유효한 카테고리 경로 사전 생성
 export async function generateStaticParams() {
   return TECH_CATEGORIES.filter((cat) => cat !== "Other").map((category) => ({
     category,
@@ -33,20 +28,13 @@ export async function generateStaticParams() {
 }
 
 async function fetchTechByCategory(category: TechCategory): Promise<TechListResponse> {
-  const notion = getNotionClient()
-  const databaseId = getNotionDatabaseId()
-  const response = await notion.dataSources.query({
-    data_source_id: databaseId,
-    filter: { property: "Category", select: { equals: category } },
-    sorts: [{ property: "Importance", direction: "descending" }],
-  })
-  const items = response.results
-    .filter((item): item is PageObjectResponse => item.object === "page")
-    .map(mapPageToTechStack)
+  const allItems = await getTechCacheItems()
+  const items = allItems
+    .filter((item) => item.category === category)
+    .sort((a, b) => b.importance - a.importance)
   return { items, total: items.length }
 }
 
-// 데이터 패칭 + 그리드 렌더링 서버 컴포넌트 (Suspense 경계 안쪽)
 async function CategoryTechList({ category }: { category: TechCategory }) {
   let data: TechListResponse
   try {
@@ -61,7 +49,7 @@ async function CategoryTechList({ category }: { category: TechCategory }) {
       <TechGrid
         items={data.items}
         emptyMessage="아직 등록된 기술 스택이 없습니다."
-        emptySubMessage={`Notion 데이터베이스에 ${category} 카테고리 항목을 추가하세요.`}
+        emptySubMessage={`관리자 페이지에서 Notion 분석을 실행하세요.`}
       />
     </>
   )

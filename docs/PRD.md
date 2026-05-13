@@ -1,4 +1,4 @@
-# Embedded Tech Portfolio MVP PRD
+# Embedded Tech Portfolio PRD
 
 ## 목차
 
@@ -7,7 +7,7 @@
 3. [기능 요구사항](#3-기능-요구사항)
 4. [비기능 요구사항](#4-비기능-요구사항)
 5. [기술 스택 및 아키텍처](#5-기술-스택-및-아키텍처)
-6. [Notion 데이터베이스 스키마](#6-notion-데이터베이스-스키마)
+6. [Notion 페이지 구조 및 데이터 스키마](#6-notion-페이지-구조-및-데이터-스키마)
 7. [화면 구성 및 라우팅](#7-화면-구성-및-라우팅)
 8. [API 설계](#8-api-설계)
 9. [구현 단계 및 일정](#9-구현-단계-및-일정)
@@ -19,29 +19,36 @@
 
 **목적:** Notion에 정리된 임베디드 기술 스택 및 학습 내용을 기반으로, 채용 담당자와 동료 개발자에게 기술 역량을 효과적으로 전달하는 기술 중심 포트폴리오 웹사이트 구축
 
-**사용자:** 임베디드 시스템 개발자의 기술 역량을 검토하는 채용 담당자 및 동료 개발자
+**사용자:**
+- **방문자**: 임베디드 시스템 개발자의 기술 역량을 검토하는 채용 담당자 및 동료 개발자
+- **관리자**: 포트폴리오 운영자 (사이트 소유자)
 
 ### 핵심 사용 흐름
 
 ```
-개발자 (Notion 문서 작성)
+[관리자]
+  │  Notion 페이지 트리에 기술 학습 문서 작성
   ↓
-Notion 데이터베이스에 기술 스택, 구현 경험, 트러블슈팅 작성
+[관리자 페이지 (/admin)]
+  │  "Notion 분석 시작" 버튼 클릭
+  │  LLM(Claude API)이 Notion 페이지를 분석 → TechStack JSON 캐시 생성
   ↓
-시스템이 Notion API로 데이터 자동 조회
+[방문자 접속]
+  │  기술 카드 목록, 카테고리/태그/검색 필터로 탐색
+  │  기술 상세 페이지에서 Notion 원본 내용 열람
+  │  이력서/포트폴리오 PDF 다운로드
   ↓
-웹사이트에 카드 목록 형태로 기술 스택 노출
-  ↓
-방문자가 카테고리/태그/검색으로 원하는 기술 탐색
-  ↓
-기술 상세 페이지에서 개념 + 구현 경험 + 트러블슈팅 열람
+[기술 스택 분포 시각화]
+  │  홈 하단 막대 차트로 카테고리별·난이도별 분포 한눈에 파악
 ```
 
 ### 목표
 
-- Notion을 단일 CMS로 활용하여 별도 관리 도구 없이 웹 콘텐츠 자동 반영
+- Notion 페이지 트리를 단일 CMS로 활용하여 별도 관리 도구 없이 웹 콘텐츠 반영
+- LLM 분석 기반으로 비정형 Notion 학습 문서에서 기술 스택 메타데이터 자동 추출
 - 기술 스택을 카테고리, 태그, 난이도, 중요도로 체계적으로 분류하여 빠른 탐색 제공
-- 개념 설명 + 실제 구현 경험 + 트러블슈팅을 한 페이지에서 제공하여 실무 역량 어필
+- 이력서 및 기술 포트폴리오 PDF 다운로드로 취업 관련 자료 통합 제공
+- 기술 스택 분포 시각화로 전체 역량을 한눈에 파악 가능하게 함
 
 ---
 
@@ -55,46 +62,62 @@ Notion 데이터베이스에 기술 스택, 구현 경험, 트러블슈팅 작�
 | US-02 | 방문자로서 Kernel, Driver, RTOS, Yocto 등 카테고리별로 기술을 필터링하고 싶다. 내가 관심 있는 기술 영역에 집중하기 위해. | 높음 |
 | US-03 | 방문자로서 GPIO, UART, SPI 등 특정 태그로 기술을 필터링하고 싶다. 세부 기술 경험을 확인하기 위해. | 높음 |
 | US-04 | 방문자로서 기술명 또는 키워드로 검색하고 싶다. 특정 기술의 보유 여부와 수준을 빠르게 확인하기 위해. | 높음 |
-| US-05 | 방문자로서 특정 기술의 상세 페이지에서 개념 설명, 구현 경험, 트러블슈팅을 확인하고 싶다. 이론 지식과 실무 경험을 동시에 평가하기 위해. | 높음 |
+| US-05 | 방문자로서 특정 기술의 상세 페이지에서 Notion에 작성된 학습 내용을 확인하고 싶다. 실무 역량을 평가하기 위해. | 높음 |
 | US-06 | 방문자로서 기술별 난이도와 중요도를 시각적으로 확인하고 싶다. 해당 기술에 대한 자신감과 숙련도를 판단하기 위해. | 보통 |
+| US-07 | 방문자로서 기술 스택 분포를 차트로 보고 싶다. 전체 역량 영역을 한눈에 파악하기 위해. | 보통 |
+| US-08 | 방문자로서 이력서와 기술 포트폴리오 PDF를 다운받고 싶다. 오프라인에서도 검토하기 위해. | 높음 |
 
-### 개발자 (포트폴리오 운영자)
+### 관리자 (포트폴리오 운영자)
 
 | ID | 사용자 스토리 | 중요도 |
 |----|--------------|--------|
-| US-07 | 개발자로서 Notion에 새 기술을 추가하면 웹사이트에 자동으로 반영되길 원한다. 별도 배포 없이 콘텐츠를 관리하기 위해. | 높음 |
-| US-08 | 개발자로서 기술 문서를 Notion의 익숙한 편집기로 작성하고 싶다. 마크다운 에디터 학습 비용 없이 콘텐츠를 관리하기 위해. | 높음 |
+| US-09 | 관리자로서 Notion에 새 기술 문서를 작성 후 분석 버튼 하나로 웹사이트에 반영하고 싶다. 별도 배포 없이 콘텐츠를 관리하기 위해. | 높음 |
+| US-10 | 관리자로서 각 기술 스택에서 원본 Notion 페이지로 바로 이동하고 싶다. 빠르게 내용을 수정하기 위해. | 높음 |
+| US-11 | 관리자로서 특정 기술 스택에 피드백 메시지를 Notion 코멘트로 전송하고 싶다. 수정이 필요한 내용을 메모하기 위해. | 보통 |
+| US-12 | 관리자로서 이력서와 기술 포트폴리오 PDF를 업로드하여 방문자가 다운받을 수 있게 하고 싶다. | 높음 |
+| US-13 | 관리자로서 분석 업데이트 후 변경된 내용을 간략하게 확인하고 싶다. 무엇이 바뀌었는지 파악하기 위해. | 보통 |
 
 ---
 
 ## 3. 기능 요구사항
 
-### 3.1 MVP 핵심 기능
+### 3.1 MVP 완료 기능 (v1.0)
 
-| ID | 기능명 | 설명 | MVP 필수 이유 | 관련 페이지 |
-|----|--------|------|--------------|------------|
-| **F001** | Notion 기술 목록 조회 | Notion API로 데이터베이스의 전체 기술 스택 목록을 가져옴 | 포트폴리오의 핵심 데이터 소스 | 홈 페이지, 카테고리 페이지 |
-| **F002** | 기술 상세 데이터 조회 | 특정 기술의 Notion 페이지 본문(개념, 구현 경험, 트러블슈팅) 조회 | 실무 역량 전달의 핵심 가치 | 기술 상세 페이지 |
-| **F003** | 카테고리 필터링 | Kernel / Driver / RTOS / Yocto 등 카테고리별로 기술 목록 필터링 | 방문자의 관심 영역 탐색 지원 | 홈 페이지, 카테고리 페이지 |
-| **F004** | 태그 필터링 | GPIO / UART / I2C / SPI 등 태그 기반으로 기술 목록 필터링 | 세부 기술 빠른 탐색 지원 | 홈 페이지 |
-| **F005** | 기술 검색 | 기술명 또는 키워드로 기술 목록 검색 | 방문자가 특정 기술 보유 여부를 빠르게 확인 | 홈 페이지, 검색 결과 페이지 |
-| **F006** | 난이도 및 중요도 표시 | 각 기술 카드에 난이도(Beginner/Intermediate/Advanced) 및 중요도 배지 표시 | 기술 숙련도 시각적 전달 | 홈 페이지, 기술 상세 페이지 |
-| **F007** | 기술 상세 페이지 렌더링 | Notion 페이지 블록(개념, 구현 경험, 트러블슈팅)을 웹 형식으로 렌더링 | 실무 역량 상세 전달의 핵심 | 기술 상세 페이지 |
+| ID | 기능명 | 설명 | 상태 |
+|----|--------|------|------|
+| **F001** | 기술 목록 조회 | 캐시 기반 전체 기술 스택 목록 조회 | ✅ 완료 |
+| **F002** | 기술 상세 조회 | 특정 기술의 Notion 페이지 블록(학습 내용) 조회 | ✅ 완료 |
+| **F003** | 카테고리 필터링 | Kernel / Driver / RTOS / Yocto 등 카테고리별 필터링 | ✅ 완료 |
+| **F004** | 태그 필터링 | GPIO / UART / I2C / SPI 등 태그 기반 필터링 | ✅ 완료 |
+| **F005** | 기술 검색 | 기술명 또는 키워드로 기술 목록 검색 | ✅ 완료 |
+| **F006** | 난이도/중요도 표시 | 각 기술 카드에 난이도·중요도 배지 표시 | ✅ 완료 |
+| **F007** | Notion 블록 렌더링 | Notion 페이지 블록을 웹 형식으로 렌더링 (12개 블록 타입, Shiki 코드 하이라이팅) | ✅ 완료 |
+| **F010** | 기술 목록 카드 UI | 기술명, 요약, 카테고리, 태그, 난이도를 카드 형식으로 표시 | ✅ 완료 |
+| **F011** | 반응형 레이아웃 | 데스크탑/태블릿/모바일 모든 화면에서 정상 표시 | ✅ 완료 |
+| **F012** | 오류 및 로딩 처리 | Notion API 응답 지연 시 Skeleton, 오류 시 안내 메시지 | ✅ 완료 |
 
-### 3.2 MVP 필수 지원 기능
+### 3.2 확장 기능 (v2.0)
 
-| ID | 기능명 | 설명 | MVP 필수 이유 | 관련 페이지 |
-|----|--------|------|--------------|------------|
-| **F010** | 기술 목록 카드 UI | 기술명, 요약, 카테고리, 태그, 난이도를 카드 형식으로 표시 | 방문자가 기술 전체 현황을 한눈에 파악 | 홈 페이지, 카테고리 페이지, 검색 결과 페이지 |
-| **F011** | 반응형 레이아웃 | 데스크탑/태블릿/모바일 모든 화면에서 정상 표시 | 다양한 환경의 방문자 지원 필수 | 전체 페이지 |
-| **F012** | 오류 및 로딩 상태 처리 | Notion API 응답 지연 시 로딩 스피너, 오류 시 안내 메시지 표시 | 방문자 경험 최소 보장 | 전체 페이지 |
+| ID | 기능명 | 설명 | 우선순위 | 관련 페이지 |
+|----|--------|------|---------|------------|
+| **F020** | Notion 페이지 트리 탐색 | 메인 페이지 → BSP 연구 페이지들 → 세부 주제 페이지들을 재귀 탐색 | 핵심 | 내부 로직 |
+| **F021** | LLM 기술 스택 분석 | Claude API로 Notion 페이지 내용 분석 → TechStack JSON 자동 추출 | 핵심 | 관리자 페이지 |
+| **F022** | JSON 캐시 기반 서빙 | LLM 분석 결과를 JSON 캐시에 저장하여 방문자에게 빠르게 서빙 | 핵심 | 전체 |
+| **F023** | 관리자 인증 | JWT 기반 비밀번호 인증으로 관리자 페이지 보호 | 핵심 | /admin |
+| **F024** | 관리자 분석 트리거 | 관리자 페이지에서 "Notion 분석 시작" 버튼으로 LLM 분석 수동 실행 | 핵심 | /admin |
+| **F025** | 업데이트 날짜 표기 | 홈 페이지에 마지막 기술 스택 업데이트 날짜 표시 | 필수 | 홈 페이지 |
+| **F026** | 변경 요약 알림 | 분석 완료 후 50자 이내 변경 내용 요약 알림 Dialog 표시 | 필수 | 관리자 페이지 |
+| **F027** | Notion 페이지 직접 링크 | 관리자 페이지 기술 테이블에서 원본 Notion 페이지로 이동 | 높음 | /admin |
+| **F028** | Notion 피드백 코멘트 | 관리자가 기술 스택 피드백 메시지를 Notion 페이지 코멘트로 전송 | 보통 | /admin |
+| **F029** | PDF 업로드 관리 | 관리자가 이력서/포트폴리오 PDF 파일을 Vercel Blob에 업로드 | 높음 | /admin |
+| **F030** | PDF 다운로드 페이지 | 방문자가 이력서·기술 포트폴리오 PDF를 다운로드 | 높음 | /resume |
+| **F031** | 기술 스택 분포 차트 | 카테고리별·난이도별 기술 수를 막대 차트로 시각화 (recharts) | 보통 | 홈 페이지 |
 
-### 3.3 MVP 이후 기능 (제외)
+### 3.3 구현하지 않는 기능
 
-- 개발자 관리자 로그인 및 인증 기능
+- 자동 업데이트 (LLM 분석은 관리자 버튼 클릭으로만 실행)
 - 기술별 조회수 통계 대시보드
 - 방문자 댓글 또는 피드백 기능
-- 다크모드 테마 설정 (별도 토글)
 - 기술 비교 기능
 - RSS 피드 또는 뉴스레터 구독
 - 다국어(영문) 지원
@@ -105,9 +128,9 @@ Notion 데이터베이스에 기술 스택, 구현 경험, 트러블슈팅 작�
 
 ### 4.1 성능
 
-- 홈 페이지 First Contentful Paint: 2초 이내 (Notion API 캐싱 적용)
-- Notion API 응답 캐싱: ISR(Incremental Static Regeneration) 60초 간격 재검증
-- API 응답 타임아웃: 10초 (이후 오류 안내 페이지 표시)
+- 홈 페이지 First Contentful Paint: 2초 이내 (JSON 캐시 기반 서빙)
+- API 응답: ISR(Incremental Static Regeneration) 60초 간격 재검증
+- LLM 분석: 관리자 버튼 클릭 후 수 분 소요 가능 (진행 중 스피너 표시)
 - 이미지 최적화: Next.js Image 컴포넌트 사용
 
 ### 4.2 반응형 지원
@@ -122,15 +145,19 @@ Notion 데이터베이스에 기술 스택, 구현 경험, 트러블슈팅 작�
 
 ### 4.3 접근성
 
-- 로그인 없이 전체 포트폴리오 열람 가능 (공개 포트폴리오)
+- 방문자: 로그인 없이 전체 포트폴리오 열람 가능 (공개 포트폴리오)
+- 관리자: 비밀번호 인증 후 /admin 접근 가능
 - HTTPS 필수 (Vercel 자동 적용)
 - 시맨틱 HTML 마크업 사용
 
 ### 4.4 보안
 
 - Notion Integration Token은 서버 환경변수에만 저장 (클라이언트 노출 금지)
-- Notion API 호출은 Next.js 서버 컴포넌트 또는 Route Handler에서만 실행
-- 환경변수는 `.env.local`에 저장하고 `.gitignore`에 포함
+- Anthropic API Key는 서버 환경변수에만 저장 (LLM 분석 서버에서만 호출)
+- 관리자 인증: JWT (HS256, 만료 24시간) + HttpOnly 쿠키
+- JWT_SECRET, ADMIN_PASSWORD는 서버 환경변수에만 저장
+- /admin 경로 및 /api/admin/** 은 미들웨어에서 JWT 검증 후 접근 허용
+- LLM 분석은 관리자 인증된 요청에서만 실행 가능 (사용자 페이지 차단)
 
 ---
 
@@ -140,126 +167,230 @@ Notion 데이터베이스에 기술 스택, 구현 경험, 트러블슈팅 작�
 
 #### 프론트엔드 프레임워크
 
-- **Next.js 15** (App Router) - React 풀스택 프레임워크, 서버 컴포넌트 기반 Notion API 호출 및 ISR 캐싱
-- **React 19** - UI 라이브러리 (최신 동시성 기능 활용)
-- **TypeScript 5.6+** - 타입 안전성 보장, Notion 응답 타입 정의
+- **Next.js 15** (App Router) - React 풀스택 프레임워크, 서버 컴포넌트 + ISR 캐싱
+- **React 19** - UI 라이브러리
+- **TypeScript 5.6+** - 타입 안전성 (`any` 타입 금지)
 
 #### 스타일링 및 UI
 
-- **Tailwind CSS v4** - 유틸리티 CSS 프레임워크 (설정 파일 없는 새 엔진, postcss 방식)
-- **shadcn/ui** - 고품질 React 컴포넌트 (Badge, Card, Input, Tabs, Select 등 활용)
+- **Tailwind CSS v4** - 유틸리티 CSS (postcss 방식, 설정 파일 없음)
+- **shadcn/ui** - Badge, Card, Input, Tabs, Select, Dialog, Toast 등
 - **Lucide React** - 아이콘 라이브러리
+- **recharts** - 기술 스택 분포 막대 차트
 
 #### 폼 및 검증
 
-- **React Hook Form 7.x** - 검색 폼 상태 관리
-- **Zod** - Notion API 응답 데이터 스키마 검증
+- **React Hook Form 7.x** - 관리자 로그인 폼, 피드백 폼 관리
+- **Zod** - 폼 스키마 검증
 
 #### 상태 관리
 
 - **Zustand** - 카테고리/태그 필터 선택 상태, 검색 키워드 전역 관리
 
-#### CMS 연동
+#### CMS 연동 및 분석
 
-- **@notionhq/client** - Notion API 공식 클라이언트 SDK
-- **notion-to-md** (선택) - Notion 블록을 마크다운으로 변환
-- **react-notion-x** (선택) - Notion 페이지 블록 렌더링
+- **@notionhq/client** - Notion API 공식 클라이언트 SDK (페이지 트리 탐색, 블록 조회, 코멘트 생성)
+- **@anthropic-ai/sdk** - Claude API (claude-sonnet-4-6 모델로 기술 스택 분석)
+
+#### 인증
+
+- **jose** - JWT 생성/검증 (Web Crypto API 기반, Edge Runtime 호환)
+
+#### 파일 저장
+
+- **@vercel/blob** - PDF 파일 영구 저장 (Vercel Blob Storage)
+- **JSON 파일 캐시** - LLM 분석 결과 (`data/tech-cache.json`), PDF 메타 (`data/pdf-meta.json`)
 
 #### 배포
 
-- **Vercel** - Next.js 15 최적화 배포 플랫폼, 환경변수 관리
+- **Vercel** - Next.js 최적화 배포 플랫폼, 환경변수 관리
 
 ### 5.2 아키텍처 구성도
 
 ```
-[개발자]
-  │  Notion 데이터베이스에 기술 문서 작성/수정
-  ↓
-[Notion]
-  │  Notion API (서버에서만 호출, NOTION_TOKEN 환경변수)
-  ↓
-[Next.js 서버 컴포넌트 / Route Handler]
-  │  ISR 캐싱 (revalidate: 60초)
-  │  Notion 응답 → TechStack 타입으로 파싱
-  ↓
-[클라이언트 브라우저]
-  │  기술 목록 카드, 카테고리/태그 필터, 검색
-  │  기술 상세 페이지 (개념 + 구현 경험 + 트러블슈팅)
+[관리자 버튼 클릭 시만 — 자동 업데이트 없음]
+
+Notion 메인 페이지 (293b2b03...)
+  └─ RTOS 연구 페이지 (Depth 1, 카테고리 힌트)
+      └─ | RTOS Introduction |         (Depth 2, 분석 단위 = 기술 스택 1개)
+      └─ | FreeRTOS Task Creation |    (Depth 2)
+  └─ 드라이버 개발 페이지 (Depth 1)
+      └─ 세부 주제들 (Depth 2) ...
+  └─ 커널 페이지 (Depth 1) ...
+         ↓
+POST /api/admin/analyze (관리자 JWT 인증 필요)
+  ├─ lib/notion-tree.ts: Depth 2 세부 페이지 목록 수집 + parentMap
+  ├─ lib/notion-page-reader.ts: 각 페이지 텍스트 추출 (최대 2000자)
+  ├─ lib/llm-analyzer.ts: Claude API (claude-sonnet-4-6) 순차 분석
+  │   └─ 페이지 제목 + 내용 + 부모 카테고리 힌트 → TechStack JSON
+  └─ lib/tech-cache.ts: data/tech-cache.json 저장 + 50자 변경 요약 생성
+         ↓ 완료 알림: shadcn Dialog (50자 이내 변경 요약)
+         ↓ 홈 페이지: 마지막 업데이트 날짜 자동 표기
+
+[방문자 접속 시 — 캐시 기반 서빙]
+
+data/tech-cache.json
+  ├─ GET /api/tech → 메모리 필터링 (category/tags/difficulty)
+  ├─ GET /api/tech/search → 메모리 텍스트 검색
+  └─ GET /api/tech/[id] → 메타(캐시) + 블록(Notion 실시간 조회)
+
+Next.js 서버 컴포넌트 → 클라이언트
+  ├─ 홈(/): 기술 카드 + 마지막 업데이트 날짜 + 차트 (하단)
+  ├─ /category/**, /tech/**, /search: 기존 동일
+  ├─ /resume: 이력서/포트폴리오 PDF 다운로드 (공개)
+  └─ /admin: 관리자 전용 (JWT 인증 필요)
+      ├─ /admin/login: 비밀번호 로그인
+      └─ /admin: 분석 트리거 + 기술 테이블 + PDF 관리
 ```
 
 ### 5.3 데이터 흐름
 
-1. 개발자가 Notion 데이터베이스에 기술 문서 작성 또는 업데이트
-2. 방문자가 포트폴리오 웹사이트 접속
-3. Next.js 서버 컴포넌트가 Notion API로 데이터베이스 목록 조회 (ISR 캐싱)
-4. 조회된 데이터를 TechStack 타입으로 파싱하여 카드 목록 렌더링
-5. 방문자가 기술 상세 페이지 접근 시 Notion 페이지 블록 개별 조회
-6. 서버에서 Notion 블록을 렌더링 가능한 형태로 변환하여 반환
+**관리자 분석 플로우:**
+1. 관리자가 `/admin`에서 "Notion 분석 시작" 버튼 클릭
+2. `POST /api/admin/analyze` 호출 (JWT 인증 검증)
+3. `lib/notion-tree.ts`가 메인 페이지에서 BSP 연구 페이지들 하위의 세부 주제 페이지 목록 수집
+4. `lib/notion-page-reader.ts`가 각 페이지 블록을 텍스트로 추출 (최대 2000자)
+5. `lib/llm-analyzer.ts`가 Claude API에 순차 전달하여 TechStack JSON 추출
+6. `lib/tech-cache.ts`가 `data/tech-cache.json` 저장
+7. 변경 요약(50자) Dialog 표시 후 페이지 새로고침
+
+**방문자 접속 플로우:**
+1. 방문자가 포트폴리오 웹사이트 접속
+2. 서버 컴포넌트가 `data/tech-cache.json`에서 TechStack 목록 조회
+3. 기술 카드 그리드, 업데이트 날짜, 차트 렌더링
+4. 방문자가 기술 카드 클릭 → `/tech/[id]`에서 Notion 블록 실시간 조회 + 렌더링
 
 ### 5.4 환경변수 구성
 
 ```bash
 # .env.local
-NOTION_TOKEN=secret_xxxx          # Notion Integration Token
-NOTION_DATABASE_ID=xxxx           # 기술 스택 데이터베이스 ID
+
+# Notion 연동 (필수)
+NOTION_TOKEN=ntn_...                  # Notion Integration Token
+NOTION_MAIN_PAGE_ID=293b2b03...       # 기술 포트폴리오 메인 페이지 ID
+
+# 관리자 인증 (필수)
+ADMIN_PASSWORD=...                    # 관리자 비밀번호
+JWT_SECRET=...                        # JWT 서명 시크릿 (32자 이상)
+
+# LLM 분석 (필수)
+ANTHROPIC_API_KEY=sk-ant-...          # Claude API 키
+
+# PDF 저장 (필수)
+BLOB_READ_WRITE_TOKEN=vercel_blob_... # Vercel Blob 토큰
+
+# 배포 도메인
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
 
 ---
 
-## 6. Notion 데이터베이스 스키마
+## 6. Notion 페이지 구조 및 데이터 스키마
 
-### 6.1 데이터베이스 프로퍼티 정의
-
-개발자가 Notion에서 아래 프로퍼티명으로 데이터베이스를 구성해야 합니다.
-
-| Notion 프로퍼티명 | 프로퍼티 타입 | 설명 | 필수 여부 | 사용 위치 |
-|------------------|-------------|------|----------|----------|
-| `Title` | Title | 기술 이름 (예: Linux Device Driver) | 필수 | 카드 제목, 검색 대상 |
-| `Category` | Select | 기술 분류 (Kernel / Driver / RTOS / Yocto) | 필수 | 카테고리 필터 |
-| `Tags` | Multi-select | 관련 태그 (GPIO / UART / I2C / SPI / DMA 등) | 필수 | 태그 필터, 카드 표시 |
-| `Summary` | Rich text | 기술 한 줄 요약 | 필수 | 카드 설명 텍스트 |
-| `Difficulty` | Select | 난이도 (Beginner / Intermediate / Advanced) | 필수 | 난이도 배지 |
-| `Importance` | Number | 중요도 점수 (1~5) | 필수 | 중요도 표시, 정렬 기준 |
-| `Created` | Created time | 문서 생성일 (자동) | 자동 | 정렬 기준 |
-
-### 6.2 기술 상세 페이지 본문 구조
-
-Notion 페이지 본문은 아래 H2 헤딩을 기준으로 섹션을 구분합니다.
+### 6.1 실제 Notion 페이지 트리 구조
 
 ```
-## 개념 (Concept)
-기술의 이론적 개념 및 원리 설명
-코드 블록, 다이어그램 포함 가능
-
-## 구현 경험 (Implementation)
-실제 구현한 내용, 사용한 방법, 코드 스니펫
-
-## 트러블슈팅 (Troubleshooting)
-발생한 문제, 원인 분석, 해결 방법
+메인 페이지: "BSP 염재영 연구원 - 연구 자료 페이지 모음"
+  │
+  ├── [분석 대상] BSP 개발 관련 연구 문서 페이지
+  │   ├── RTOS 관련 개발 연구          → category: 'RTOS'
+  │   │   ├── | RTOS Introduction |   → TechStack 1개
+  │   │   ├── | FreeRTOS Task Creation | → TechStack 1개
+  │   │   └── ... (세부 주제 페이지들)
+  │   ├── 디바이스 드라이버 개발 문서   → category: 'Driver'
+  │   ├── 디버깅을 통해 배우는 리눅스 커널의 구조와 원리 → category: 'Kernel'
+  │   ├── Microcontroller 관련 연구 개발 → category: 'Driver'
+  │   ├── 임베디드 리눅스 프로그래밍   → category: 'Kernel'
+  │   └── Yocto Linux Kernel Build Guide → category: 'Yocto'
+  │
+  ├── [제외] 코딩관련 연구 자료 페이지
+  ├── [제외] 이외 개발 연구 참고 자료 페이지
+  └── [제외] AI 툴 사용 연구
 ```
 
-### 6.3 TypeScript 타입 정의
+**분석 규칙:**
+- Depth 1 페이지 (연구 분야 페이지): 카테고리 컨텍스트로만 활용
+- Depth 2 페이지 (세부 주제 페이지): LLM 분석 단위 (기술 스택 1개)
+- 목차/인덱스 페이지로 판단되면 null 반환하여 제외
+
+### 6.2 LLM 추출 TechStack 스키마
+
+LLM이 각 Notion 세부 주제 페이지를 분석하여 아래 구조로 추출합니다.
+
+| 필드 | 타입 | 설명 | 예시 |
+|------|------|------|------|
+| `title` | string | 간결한 기술명 | "FreeRTOS Task 생성" |
+| `category` | TechCategory | 기술 분류 | "RTOS" |
+| `tags` | string[] | 관련 태그 | ["FreeRTOS", "STM32", "RTOS"] |
+| `summary` | string | 기술 한 줄 요약 (100자 이내) | "FreeRTOS에서 태스크를 생성하고..." |
+| `difficulty` | Difficulty | 난이도 | "Intermediate" |
+| `importance` | number | 중요도 (1~5) | 4 |
+
+### 6.3 캐시 데이터 스키마
 
 ```typescript
-// 기술 스택 목록 아이템
+// lib/tech-cache.ts에서 관리
+interface CachedTechStack extends TechStack {
+  notionPageId: string  // Notion 원본 페이지 ID (= id와 동일)
+  notionUrl: string     // https://notion.so/{pageId}
+}
+
+interface TechCacheFile {
+  updatedAt: string          // ISO 8601 업데이트 시각
+  updatedSummary: string     // 50자 이내 변경 요약
+  items: CachedTechStack[]   // 분석된 기술 스택 목록
+}
+```
+
+### 6.4 TypeScript 타입 정의
+
+```typescript
+// 기술 스택 기본 타입
 interface TechStack {
-  id: string;                    // Notion Page ID
-  title: string;                 // 기술 이름
-  category: TechCategory;        // 카테고리
-  tags: string[];                // 태그 목록
-  summary: string;               // 한 줄 요약
-  difficulty: Difficulty;        // 난이도
-  importance: number;            // 중요도 (1~5)
-  createdAt: string;             // 생성일 (ISO 8601)
+  id: string              // Notion Page ID
+  title: string           // 기술 이름
+  category: TechCategory  // 카테고리
+  tags: string[]          // 태그 목록
+  summary: string         // 한 줄 요약
+  difficulty: Difficulty  // 난이도
+  importance: number      // 중요도 (1~5)
+  createdAt: string       // ISO 8601
 }
 
-// 기술 상세 (목록 + 본문 블록 포함)
+// 캐시 기술 스택 (Notion URL 포함)
+interface CachedTechStack extends TechStack {
+  notionPageId: string
+  notionUrl: string
+}
+
+// 기술 상세 (블록 포함)
 interface TechStackDetail extends TechStack {
-  content: NotionBlock[];        // 페이지 본문 블록
+  content: {
+    concept: NotionBlock[]
+    implementation: NotionBlock[]
+    troubleshooting: NotionBlock[]
+  }
 }
 
-type TechCategory = 'Kernel' | 'Driver' | 'RTOS' | 'Yocto' | 'Other';
-type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+// PDF 메타
+interface PdfFileMeta {
+  type: 'resume' | 'portfolio'
+  url: string
+  uploadedAt: string
+  fileName: string
+}
+
+// 관리자 분석 응답
+interface AdminAnalyzeResponse {
+  success: boolean
+  updatedAt: string
+  updatedSummary: string
+  itemCount: number
+  error?: string
+}
+
+type TechCategory = 'Kernel' | 'Driver' | 'RTOS' | 'Yocto' | 'Other'
+type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
 ```
 
 ---
@@ -271,19 +402,26 @@ type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
 ```
 [방문자 접속]
   ↓
-홈 페이지 (기술 스택 카드 목록)
+홈 페이지 (기술 스택 카드 목록 + 업데이트 날짜 + 하단 분포 차트)
   ↓ 카테고리 탭 클릭
 카테고리 페이지 (특정 카테고리 기술 목록)
-  ↓ (또는 홈에서) 기술 카드 클릭
-기술 상세 페이지 (개념 + 구현 경험 + 트러블슈팅)
+  ↓ 기술 카드 클릭
+기술 상세 페이지 (Notion 학습 내용 렌더링)
 
-  ↓ (홈에서) 검색창에 키워드 입력
-검색 결과 페이지 (키워드 매칭 기술 목록)
-  ↓ 검색 결과 카드 클릭
-기술 상세 페이지
+  ↓ 검색창 키워드 입력
+검색 결과 페이지 → 기술 상세 페이지
 
-  ↓ (Notion API 오류 발생)
-오류 페이지 (안내 메시지 + 홈 이동 버튼)
+  ↓ 헤더 Resume 클릭
+이력서 다운로드 페이지 (PDF 다운로드)
+
+[관리자 접속]
+  ↓
+/admin/login (비밀번호 입력)
+  ↓
+/admin (관리자 메인)
+  ├─ Notion 분석 시작 버튼 → LLM 분석 → 변경 요약 Dialog
+  ├─ 기술 스택 테이블 (Notion 링크 + 피드백 버튼)
+  └─ PDF 업로드 관리
 ```
 
 ### 7.2 메뉴 구조
@@ -291,25 +429,24 @@ type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
 ```
 포트폴리오 내비게이션 (헤더)
 ├── 홈 (전체 기술 목록)
-│   └── 기능: F001, F003, F004, F005, F006, F010
 ├── Kernel
-│   └── 기능: F001, F003, F010
 ├── Driver
-│   └── 기능: F001, F003, F010
 ├── RTOS
-│   └── 기능: F001, F003, F010
-└── Yocto
-    └── 기능: F001, F003, F010
+├── Yocto
+└── Resume (이력서/포트폴리오 다운로드)
 ```
 
 ### 7.3 라우팅 구조
 
-| 페이지 | 경로 | 설명 |
-|--------|------|------|
-| 홈 | `/` | 전체 기술 스택 카드 목록 |
-| 카테고리 | `/category/[category]` | 특정 카테고리 기술 목록 |
-| 기술 상세 | `/tech/[id]` | 특정 기술의 상세 페이지 |
-| 검색 결과 | `/search?q=[keyword]` | 검색 결과 목록 |
+| 페이지 | 경로 | 접근 | 설명 |
+|--------|------|------|------|
+| 홈 | `/` | 공개 | 전체 기술 스택 카드 목록 + 분포 차트 |
+| 카테고리 | `/category/[category]` | 공개 | 특정 카테고리 기술 목록 |
+| 기술 상세 | `/tech/[id]` | 공개 | Notion 학습 내용 렌더링 |
+| 검색 결과 | `/search?q=[keyword]` | 공개 | 검색 결과 목록 |
+| 이력서 | `/resume` | 공개 | PDF 다운로드 |
+| 관리자 로그인 | `/admin/login` | 공개 | 비밀번호 입력 |
+| 관리자 | `/admin` | 인증 필요 | LLM 트리거 + 기술 관리 + PDF 관리 |
 
 ### 7.4 페이지별 상세 기능
 
@@ -317,85 +454,104 @@ type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
 
 #### 홈 페이지
 
-> **구현 기능:** `F001`, `F003`, `F004`, `F005`, `F006`, `F010`, `F011` | **접근:** 누구나
+> **구현 기능:** `F001`, `F003`, `F004`, `F005`, `F006`, `F010`, `F011`, `F025`, `F031` | **접근:** 공개
 
 | 항목 | 내용 |
 |------|------|
 | **역할** | 전체 기술 스택을 카드 목록으로 보여주는 포트폴리오 메인 랜딩 페이지 |
-| **진입 경로** | 브라우저 주소창 직접 입력, 헤더 로고/홈 메뉴 클릭, 다른 페이지에서 홈 이동 |
-| **사용자 행동** | 전체 기술 목록 확인, 카테고리/태그 필터 클릭, 검색창 키워드 입력, 카드 클릭하여 상세 진입 |
-| **주요 기능** | 기술 카드 그리드 목록 (제목, 요약, 카테고리, 태그, 난이도, 중요도), 카테고리 탭 필터, 태그 멀티 선택 필터, 검색 입력창, 필터 초기화 버튼 |
-| **다음 이동** | 카드 클릭 → 기술 상세 페이지, 검색 입력 → 검색 결과 페이지, 카테고리 탭 클릭 → 카테고리 페이지 |
+| **주요 기능** | 기술 카드 그리드, 카테고리/태그/난이도 필터, 검색 입력창, 마지막 업데이트 날짜 표시, 하단 기술 분포 막대 차트 |
+| **다음 이동** | 카드 클릭 → 기술 상세 페이지, 검색 입력 → 검색 결과 페이지, 카테고리 탭 → 카테고리 페이지 |
 
 ---
 
 #### 카테고리 페이지
 
-> **구현 기능:** `F001`, `F003`, `F010`, `F011` | **접근:** 누구나
+> **구현 기능:** `F001`, `F003`, `F010`, `F011` | **접근:** 공개
 
 | 항목 | 내용 |
 |------|------|
 | **역할** | 특정 카테고리(Kernel/Driver/RTOS/Yocto)에 속하는 기술만 필터링하여 표시 |
-| **진입 경로** | 헤더 카테고리 메뉴 클릭 (Kernel, Driver, RTOS, Yocto), 홈 카테고리 탭 클릭 |
-| **사용자 행동** | 해당 카테고리 기술 목록 확인, 태그 추가 필터, 카드 클릭하여 상세 진입 |
-| **주요 기능** | 카테고리명 헤딩, 해당 카테고리 기술 카드 그리드 목록, 태그 필터, 기술 수 표시 |
-| **다음 이동** | 카드 클릭 → 기술 상세 페이지, 다른 카테고리 탭 → 해당 카테고리 페이지 |
+| **주요 기능** | 카테고리명 헤딩, 기술 카드 그리드, 태그 필터, 기술 수 표시 |
 
 ---
 
 #### 기술 상세 페이지
 
-> **구현 기능:** `F002`, `F006`, `F007`, `F011` | **접근:** 누구나
+> **구현 기능:** `F002`, `F006`, `F007`, `F011` | **접근:** 공개
 
 | 항목 | 내용 |
 |------|------|
-| **역할** | 특정 기술의 개념, 구현 경험, 트러블슈팅을 상세하게 보여주는 핵심 콘텐츠 페이지 |
-| **진입 경로** | 홈/카테고리/검색 결과 페이지의 기술 카드 클릭, 직접 URL 입력 |
-| **사용자 행동** | 기술 개념 및 원리 읽기, 구현 경험 코드 스니펫 확인, 트러블슈팅 사례 확인, 뒤로 가기 |
-| **주요 기능** | 기술명 헤딩, 카테고리/태그/난이도/중요도 메타 정보, 개념(Concept) 섹션, 구현 경험(Implementation) 섹션, 트러블슈팅(Troubleshooting) 섹션, 코드 블록 하이라이팅, 이전/다음 기술 내비게이션 |
-| **다음 이동** | 브라우저 뒤로 가기 → 이전 페이지, 관련 태그 클릭 → 태그 필터 적용된 홈 |
+| **역할** | Notion 세부 주제 페이지의 학습 내용을 웹으로 렌더링 |
+| **주요 기능** | 기술명 헤딩, 카테고리/태그/난이도/중요도 메타, Notion 블록 렌더링 (코드 블록 Shiki 하이라이팅) |
 
 ---
 
-#### 검색 결과 페이지
+#### 이력서 다운로드 페이지 (신규)
 
-> **구현 기능:** `F005`, `F010`, `F011` | **접근:** 누구나
+> **구현 기능:** `F030` | **접근:** 공개
 
 | 항목 | 내용 |
 |------|------|
-| **역할** | 키워드 검색 결과를 카드 목록으로 표시하는 페이지 |
-| **진입 경로** | 홈 페이지 검색창에 키워드 입력 후 엔터/검색 버튼 클릭 |
-| **사용자 행동** | 검색 결과 기술 카드 목록 확인, 검색어 수정, 카드 클릭 |
-| **주요 기능** | 검색어 표시 헤딩, 검색 결과 수 표시, 기술 카드 그리드 목록, 검색 결과 없을 시 안내 메시지, 검색창 (재검색 가능) |
-| **다음 이동** | 카드 클릭 → 기술 상세 페이지, 검색 초기화 → 홈 페이지 |
+| **역할** | 이력서 및 기술 포트폴리오 PDF 다운로드 제공 |
+| **주요 기능** | 이력서 카드 (파일명, 업로드일, 다운로드 버튼), 기술 포트폴리오 카드 |
+| **미업로드 시** | "준비 중입니다" 비활성화 상태 표시 |
+
+---
+
+#### 관리자 로그인 페이지 (신규)
+
+> **구현 기능:** `F023` | **접근:** 공개 (인증 전)
+
+| 항목 | 내용 |
+|------|------|
+| **역할** | 관리자 비밀번호 인증 |
+| **주요 기능** | 비밀번호 입력 폼, 오류 메시지 표시, 성공 시 /admin으로 이동 |
+
+---
+
+#### 관리자 페이지 (신규)
+
+> **구현 기능:** `F024`, `F025`, `F026`, `F027`, `F028`, `F029` | **접근:** 인증 필요
+
+| 항목 | 내용 |
+|------|------|
+| **역할** | LLM 분석 트리거 + 기술 스택 관리 + PDF 업로드 관리 |
+| **주요 기능** | 현재 캐시 상태 (업데이트 날짜, 기술 수), Notion 분석 시작 버튼 (스피너 → 변경 요약 Dialog), 기술 스택 테이블 (Notion 링크 + 피드백 버튼), PDF 업로드 카드 |
 
 ---
 
 #### 오류 페이지
 
-> **구현 기능:** `F012` | **접근:** 누구나
+> **구현 기능:** `F012` | **접근:** 공개
 
 | 항목 | 내용 |
 |------|------|
-| **역할** | Notion API 오류 또는 존재하지 않는 페이지 접근 시 사용자 안내 |
-| **진입 경로** | 존재하지 않는 기술 ID 접근, Notion API 연동 오류 발생 |
-| **사용자 행동** | 오류 내용 확인 후 홈으로 이동 |
-| **주요 기능** | 오류 코드 및 안내 메시지, **홈으로 이동** 버튼 |
-| **다음 이동** | 홈으로 이동 버튼 클릭 → 홈 페이지 |
+| **역할** | 존재하지 않는 페이지 접근 또는 오류 발생 시 안내 |
+| **주요 기능** | 오류 메시지, 홈으로 이동 버튼 |
 
 ---
 
 ## 8. API 설계
 
-### 8.1 Next.js Route Handler
+### 8.1 공개 API (방문자)
 
-| 메서드 | 경로 | 설명 | 캐싱 전략 |
-|--------|------|------|----------|
-| `GET` | `/api/tech` | 전체 기술 스택 목록 조회 (필터 파라미터 지원) | ISR 60초 |
-| `GET` | `/api/tech/[id]` | 특정 기술 상세 데이터 조회 (Notion 블록 포함) | ISR 60초 |
-| `GET` | `/api/tech/search?q=[keyword]` | 키워드로 기술 검색 | ISR 60초 |
+| 메서드 | 경로 | 설명 | 캐싱 전략 | 데이터 소스 |
+|--------|------|------|----------|------------|
+| `GET` | `/api/tech` | 전체 기술 스택 목록 (필터 지원) | ISR 60초 | JSON 캐시 메모리 필터링 |
+| `GET` | `/api/tech/[id]` | 기술 상세 (메타 + Notion 블록) | ISR 60초 | 메타: 캐시, 블록: Notion 실시간 |
+| `GET` | `/api/tech/search` | 키워드 검색 | ISR 60초 | JSON 캐시 텍스트 검색 |
 
-### 8.2 쿼리 파라미터
+### 8.2 관리자 API (인증 필요)
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `POST` | `/api/admin/login` | 비밀번호 인증 → JWT 쿠키 발급 |
+| `POST` | `/api/admin/logout` | JWT 쿠키 만료 처리 |
+| `POST` | `/api/admin/analyze` | Notion 페이지 트리 탐색 + LLM 분석 + 캐시 저장 |
+| `POST` | `/api/admin/comment` | Notion 페이지에 코멘트 전송 |
+| `POST` | `/api/admin/upload-pdf` | PDF 파일 Vercel Blob 업로드 |
+
+### 8.3 쿼리 파라미터
 
 #### `GET /api/tech`
 
@@ -405,25 +561,14 @@ type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
 | `tags` | string | 태그 필터 (콤마 구분) | `?tags=GPIO,UART` |
 | `difficulty` | string | 난이도 필터 | `?difficulty=Advanced` |
 
-### 8.3 응답 데이터 구조
+### 8.4 응답 데이터 구조
 
 #### 기술 목록 응답 (`GET /api/tech`)
 
 ```typescript
 interface TechListResponse {
-  items: TechStack[];
-  total: number;
-}
-
-interface TechStack {
-  id: string;            // Notion Page ID
-  title: string;         // 기술 이름
-  category: string;      // 카테고리
-  tags: string[];        // 태그 목록
-  summary: string;       // 한 줄 요약
-  difficulty: string;    // 난이도
-  importance: number;    // 중요도 (1~5)
-  createdAt: string;     // 생성일 (ISO 8601)
+  items: TechStack[]
+  total: number
 }
 ```
 
@@ -432,10 +577,10 @@ interface TechStack {
 ```typescript
 interface TechDetailResponse extends TechStack {
   content: {
-    concept: NotionBlock[];          // 개념 섹션 블록
-    implementation: NotionBlock[];   // 구현 경험 섹션 블록
-    troubleshooting: NotionBlock[];  // 트러블슈팅 섹션 블록
-  };
+    concept: NotionBlock[]
+    implementation: NotionBlock[]
+    troubleshooting: NotionBlock[]
+  }
 }
 ```
 
@@ -443,77 +588,128 @@ interface TechDetailResponse extends TechStack {
 
 ```typescript
 interface SearchResponse {
-  keyword: string;
-  items: TechStack[];
-  total: number;
+  keyword: string
+  items: TechStack[]
+  total: number
 }
 ```
 
-### 8.4 Notion API 클라이언트 유틸리티 구조
+#### 관리자 분석 응답 (`POST /api/admin/analyze`)
+
+```typescript
+interface AdminAnalyzeResponse {
+  success: boolean
+  updatedAt: string
+  updatedSummary: string  // 50자 이내
+  itemCount: number
+  error?: string
+}
+```
+
+### 8.5 lib/ 유틸리티 구조
 
 ```
 lib/
-├── notion.ts          # Notion 클라이언트 초기화
-├── tech-mapper.ts     # Notion 응답 → TechStack 타입 변환
-└── block-parser.ts    # Notion 블록 → 렌더링 가능한 구조 변환
+├── notion.ts              # Notion 클라이언트 싱글턴 + getNotionMainPageId()
+├── notion-tree.ts         # Notion 페이지 트리 재귀 탐색
+├── notion-page-reader.ts  # 페이지 블록 → 텍스트 추출
+├── tech-mapper.ts         # Notion 응답 → TechStack 변환 (기존)
+├── block-parser.ts        # Notion 블록 → 렌더링 구조 변환 (기존)
+├── tech-cache.ts          # JSON 캐시 읽기/쓰기
+├── llm-analyzer.ts        # Claude API 분석 엔진
+├── auth.ts                # JWT 관리자 인증
+├── pdf-meta.ts            # PDF 메타 파일 관리
+├── constants.ts           # 사이트 설정, 카테고리, 상수
+└── utils.ts               # cn() 유틸리티
 ```
 
 ---
 
 ## 9. 구현 단계 및 일정
 
-### Phase 1 - 환경 설정 및 Notion 연동 (1~2일)
+### Phase 1 (완료) - MVP 기반 구축
 
-**목표:** Notion API 연동 및 데이터 파싱 기반 구축
+**목표:** 기본 포트폴리오 웹사이트 완성
+- ✅ Next.js 15 + TypeScript + Tailwind CSS v4 + shadcn/ui 프로젝트 골격
+- ✅ Notion API 클라이언트 + 기술 매퍼 + 블록 파서
+- ✅ 홈, 카테고리, 기술 상세, 검색 페이지
+- ✅ NotionBlockRenderer (12개 블록 타입, Shiki 코드 하이라이팅)
+- ✅ Zustand 필터 스토어
+- ✅ Vercel 배포 + ISR 캐싱
 
-- [ ] `@notionhq/client` 패키지 설치
-- [ ] `.env.local`에 `NOTION_TOKEN`, `NOTION_DATABASE_ID` 환경변수 설정
-- [ ] Notion 데이터베이스 생성 및 Integration 연동
-- [ ] `lib/notion.ts` Notion 클라이언트 초기화
-- [ ] `lib/tech-mapper.ts` Notion 응답 → TechStack 타입 변환 함수 구현
-- [ ] `GET /api/tech` Route Handler 구현 및 응답 확인
+---
 
-### Phase 2 - 기술 목록 페이지 (2~3일)
+### Phase 2 (신규) - 데이터 레이어 재설계
 
-**목표:** 홈 페이지에서 기술 카드 목록 표시
+**목표:** Notion 페이지 트리 탐색 + JSON 캐시 기반으로 데이터 소스 전환
 
-- [ ] `TechCard` 컴포넌트 구현 (제목, 요약, 카테고리, 태그, 난이도, 중요도)
-- [ ] 홈 페이지 기술 카드 그리드 레이아웃 구현 (반응형: 1/2/3열)
-- [ ] 카테고리 탭 필터 컴포넌트 구현 (F003)
-- [ ] 태그 멀티 선택 필터 컴포넌트 구현 (F004)
-- [ ] Zustand 스토어로 필터 상태 관리 구현
-- [ ] 카테고리 페이지 (`/category/[category]`) 구현
+- [ ] `lib/notion-tree.ts`: BSP 연구 페이지 하위 세부 주제 페이지 재귀 탐색
+- [ ] `lib/notion-page-reader.ts`: 페이지 블록 → 텍스트 추출 (최대 2000자)
+- [ ] `lib/tech-cache.ts`: JSON 캐시 읽기/쓰기
+- [ ] `lib/pdf-meta.ts`: PDF 메타 파일 관리
+- [ ] `lib/notion.ts` 수정: `getNotionDatabaseId()` 제거, `getNotionMainPageId()` 추가
+- [ ] `types/index.ts` 수정: 신규 타입 추가
+- [ ] `data/.gitkeep` 생성, `.gitignore`에 `data/*.json` 추가
 
-### Phase 3 - 기술 상세 페이지 (2~3일)
+---
 
-**목표:** 개념, 구현 경험, 트러블슈팅 렌더링
+### Phase 3 (신규) - LLM 분석 엔진
 
-- [ ] `lib/block-parser.ts` Notion 블록 파싱 구현
-- [ ] `GET /api/tech/[id]` Route Handler 구현
-- [ ] 기술 상세 페이지 (`/tech/[id]`) 구현
-- [ ] 개념/구현 경험/트러블슈팅 섹션 분리 렌더링
-- [ ] 코드 블록 문법 하이라이팅 적용 (`highlight.js` 또는 `prism`)
-- [ ] 이전/다음 기술 내비게이션 구현
+**목표:** Claude API로 Notion 페이지 자동 분석 → TechStack 추출
 
-### Phase 4 - 검색 기능 (1~2일)
+- [ ] `lib/llm-analyzer.ts`: Claude API (claude-sonnet-4-6) 분석 엔진
+  - `analyzePage()`: 단일 페이지 분석
+  - `analyzeAllPages()`: 순차 처리 (200ms delay)
+  - `generateChangeSummary()`: 50자 이내 변경 요약
+- [ ] `app/api/admin/analyze/route.ts`: LLM 분석 트리거 API (`force-dynamic`)
 
-**목표:** 키워드 검색 기능 완성
+---
 
-- [ ] 검색 입력 컴포넌트 구현 (디바운스 적용)
-- [ ] `GET /api/tech/search` Route Handler 구현
-- [ ] 검색 결과 페이지 (`/search`) 구현
-- [ ] 검색 결과 없을 시 Empty State UI 구현
+### Phase 4 (신규) - 관리자 페이지 + 인증
 
-### Phase 5 - UI 마무리 및 배포 (1~2일)
+**목표:** 비밀번호 인증 + 분석 트리거 + Notion 코멘트 + PDF 관리
 
-**목표:** 반응형 스타일링 완성 및 Vercel 배포
+- [ ] `lib/auth.ts`: JWT 인증 (jose, HS256, 24시간)
+- [ ] `middleware.ts`: `/admin/**` 및 `/api/admin/**` 경로 보호
+- [ ] `app/api/admin/login/route.ts`, `app/api/admin/logout/route.ts`
+- [ ] `app/api/admin/comment/route.ts`: Notion 코멘트 전송
+- [ ] `app/api/admin/upload-pdf/route.ts`: Vercel Blob 업로드
+- [ ] `app/admin/login/page.tsx`: 로그인 폼
+- [ ] `app/admin/layout.tsx`: 관리자 레이아웃 (로그아웃 버튼)
+- [ ] `app/admin/page.tsx`: 관리자 메인 (캐시 상태 + 분석 트리거 + 기술 테이블 + PDF 관리)
+- [ ] `components/admin/analyze-button.tsx`: 분석 트리거 버튼 + 완료 Dialog
+- [ ] `components/admin/feedback-dialog.tsx`: 피드백 코멘트 다이얼로그
+- [ ] `components/admin/tech-table.tsx`: 기술 스택 관리 테이블
+- [ ] `components/admin/pdf-upload-card.tsx`: PDF 업로드 카드
 
-- [ ] 전체 페이지 반응형 레이아웃 검수 (모바일/태블릿/데스크탑)
-- [ ] 로딩 스켈레톤 UI 구현 (Notion API 응답 대기 시)
-- [ ] 오류 페이지 구현 (not-found.tsx, error.tsx)
-- [ ] ISR 캐싱 설정 확인 (`revalidate` 옵션)
-- [ ] Vercel 배포 및 환경변수 설정
-- [ ] 전체 사용자 흐름 검수
+---
+
+### Phase 5 (신규) - 기술 스택 시각화 차트
+
+**목표:** recharts 막대 차트로 기술 분포 시각화
+
+- [ ] `components/charts/tech-distribution-chart.tsx`: 카테고리별/난이도별 분포 차트
+- [ ] `app/page.tsx` 수정: 업데이트 날짜 + 차트 섹션 추가
+
+---
+
+### Phase 6 (신규) - 이력서 다운로드 페이지
+
+**목표:** 공개 PDF 다운로드 페이지
+
+- [ ] `app/resume/page.tsx`: 이력서/포트폴리오 PDF 다운로드 페이지
+- [ ] `lib/constants.ts` 수정: Resume navItem 추가
+
+---
+
+### Phase 7 (신규) - 기존 API 호환성 연결
+
+**목표:** 기존 API Route를 캐시 기반으로 교체 (응답 스키마 동일 유지)
+
+- [ ] `app/api/tech/route.ts` 수정: 캐시 기반 메모리 필터링
+- [ ] `app/api/tech/search/route.ts` 수정: 캐시 기반 텍스트 검색
+- [ ] `app/api/tech/[id]/route.ts` 수정: 메타(캐시) + 블록(Notion 실시간)
+- [ ] `next.config.ts` 수정: Vercel Blob URL remotePatterns 추가
 
 ---
 
@@ -524,13 +720,17 @@ lib/
 | 홈 페이지 로딩 시간 (FCP) | 2초 이내 | Vercel Speed Insights |
 | 기술 상세 페이지 로딩 시간 | 3초 이내 | Vercel Speed Insights |
 | 모바일 레이아웃 정상 표시 | iOS Safari, Android Chrome 지원 | 직접 기기 확인 |
-| Notion API 연동 오류율 | 5% 미만 | Vercel 로그 모니터링 |
 | 전체 기술 스택 카드 정상 렌더링 | 100% | 브라우저 직접 확인 |
 | 카테고리/태그 필터 동작 정확도 | 100% | 수동 테스트 |
-| 기술 상세 페이지 3개 섹션 렌더링 | 개념/구현/트러블슈팅 모두 표시 | 브라우저 직접 확인 |
+| LLM 분석 성공률 | BSP 연구 페이지 90% 이상 TechStack 추출 | 관리자 페이지 직접 확인 |
+| 관리자 인증 보안 | JWT 미인증 시 /admin 접근 차단 | 브라우저 직접 확인 |
+| PDF 다운로드 | 업로드된 파일 정상 다운로드 | 브라우저 직접 확인 |
+| 차트 렌더링 | 기술 분포 차트 정상 표시 | 브라우저 직접 확인 |
+| 업데이트 날짜 표기 | 분석 후 홈 페이지에 날짜 표시 | 브라우저 직접 확인 |
 
 ---
 
-*문서 작성일: 2026-05-06*
-*버전: v1.0 (MVP)*
+*문서 작성일: 2026-05-06 (최초 MVP)*
+*최종 업데이트: 2026-05-13 (v2.0 확장 계획 반영)*
+*버전: v2.0 (MVP → 프로덕션 확장)*
 *프로젝트: Embedded Tech Portfolio*

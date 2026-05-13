@@ -15,11 +15,11 @@ export function getNotionClient(): Client {
   return notionClient
 }
 
-// 기술 스택 데이터베이스 ID 조회
-export function getNotionDatabaseId(): string {
-  const databaseId = process.env.NOTION_DATABASE_ID
-  if (!databaseId) {
-    throw new Error("NOTION_DATABASE_ID 환경변수가 설정되지 않았습니다.")
+// 기술 포트폴리오 메인 페이지 ID 조회
+export function getNotionMainPageId(): string {
+  const pageId = process.env.NOTION_MAIN_PAGE_ID
+  if (!pageId) {
+    throw new Error("NOTION_MAIN_PAGE_ID 환경변수가 설정되지 않았습니다.")
   }
-  return databaseId
+  return pageId
 }

@@ -9,6 +9,7 @@ export const SITE_CONFIG = {
     { label: 'Driver', href: '/category/Driver' },
     { label: 'RTOS', href: '/category/RTOS' },
     { label: 'Yocto', href: '/category/Yocto' },
+    { label: 'Resume', href: '/resume' },
   ],
 } as const
 

@@ -1,20 +1,17 @@
 import Link from "next/link"
 import { Suspense } from "react"
 import { ArrowRight, Cpu, Layers, Settings, BookOpen } from "lucide-react"
-import type { PageObjectResponse } from "@notionhq/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { HomeTechList } from "@/components/tech/home-tech-list"
 import { FilterBar } from "@/components/tech/filter-bar"
 import { TechGridSkeleton } from "@/components/tech/tech-card-skeleton"
+import { TechDistributionChart } from "@/components/charts/tech-distribution-chart"
 import { TECH_CATEGORIES } from "@/lib/constants"
-import { getNotionClient, getNotionDatabaseId } from "@/lib/notion"
-import { mapPageToTechStack } from "@/lib/tech-mapper"
-import type { TechListResponse } from "@/types"
+import { getTechCacheItems, getTechCacheUpdatedAt } from "@/lib/tech-cache"
 
 export const revalidate = 60
 
-// 카테고리별 설명 및 아이콘 매핑
 const categoryMeta: Record<string, { icon: React.ComponentType<{ className?: string }>; description: string }> = {
   Kernel: {
     icon: Cpu,
@@ -34,7 +31,6 @@ const categoryMeta: Record<string, { icon: React.ComponentType<{ className?: str
   },
 }
 
-// 포트폴리오 기술 스택 배지 목록
 const techBadges = [
   "Linux Kernel",
   "Device Driver",
@@ -48,27 +44,11 @@ const techBadges = [
   "DMA",
 ]
 
-async function fetchInitialTechList(): Promise<TechListResponse> {
-  const notion = getNotionClient()
-  const databaseId = getNotionDatabaseId()
-  const response = await notion.dataSources.query({
-    data_source_id: databaseId,
-    sorts: [{ property: "Importance", direction: "descending" }],
-  })
-  const items = response.results
-    .filter((item): item is PageObjectResponse => item.object === "page")
-    .map(mapPageToTechStack)
-  return { items, total: items.length }
-}
-
 export default async function HomePage() {
-  let initialItems: TechListResponse["items"] = []
-  try {
-    const data = await fetchInitialTechList()
-    initialItems = data.items
-  } catch {
-    // Notion API 오류 시 빈 목록으로 폴백
-  }
+  const [initialItems, updatedAt] = await Promise.all([
+    getTechCacheItems().catch(() => []),
+    getTechCacheUpdatedAt().catch(() => null),
+  ])
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16">
@@ -94,13 +74,18 @@ export default async function HomePage() {
             </Link>
           </Button>
         </div>
+        {updatedAt && (
+          <p className="mt-4 text-xs text-muted-foreground">
+            마지막 업데이트: {new Date(updatedAt).toLocaleString("ko-KR")}
+          </p>
+        )}
       </section>
 
       {/* 카테고리 섹션 */}
       <section className="mb-16">
         <h2 className="mb-8 text-center text-2xl font-semibold">카테고리별 기술 스택</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          {TECH_CATEGORIES.filter((cat) => cat !== 'Other').map((category) => {
+          {TECH_CATEGORIES.filter((cat) => cat !== "Other").map((category) => {
             const meta = categoryMeta[category]
             if (!meta) return null
             const Icon = meta.icon
@@ -128,7 +113,7 @@ export default async function HomePage() {
       </section>
 
       {/* 전체 기술 스택 섹션 */}
-      <section>
+      <section className="mb-16">
         <h2 className="mb-6 text-center text-2xl font-semibold">전체 기술 스택</h2>
         <div className="mb-6">
           <FilterBar />
@@ -137,6 +122,14 @@ export default async function HomePage() {
           <HomeTechList initialItems={initialItems} />
         </Suspense>
       </section>
+
+      {/* 기술 스택 분포 차트 */}
+      {initialItems.length > 0 && (
+        <section>
+          <h2 className="mb-6 text-center text-2xl font-semibold">기술 스택 분포</h2>
+          <TechDistributionChart items={initialItems} />
+        </section>
+      )}
     </div>
   )
 }
