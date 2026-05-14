@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTechCacheItems } from "@/lib/tech-cache"
 import type { TechListResponse, TechCategory, Difficulty } from "@/types"
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { LogOut, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -10,11 +10,17 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const isLoginPage = pathname === "/admin/login"
 
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST" })
     router.push("/admin/login")
     router.refresh()
+  }
+
+  if (isLoginPage) {
+    return <>{children}</>
   }
 
   return (
