@@ -5,7 +5,7 @@ import type { CachedTechStack, NotionPageMeta, TechCategory, Difficulty } from "
 
 const MODEL = "claude-sonnet-4-6"
 const MAX_TOKENS = 1024
-const DELAY_MS = 400
+const DELAY_MS = 200
 
 interface LlmAnalysisInput {
   pageId: string

@@ -29,6 +29,7 @@ export async function writePdfMeta(data: PdfMetaFile): Promise<void> {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
+    allowOverwrite: true,
   })
 }
 

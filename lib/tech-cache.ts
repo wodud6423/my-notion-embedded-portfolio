@@ -28,6 +28,7 @@ export async function writeTechCache(data: TechCacheFile): Promise<void> {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
+    allowOverwrite: true,
   })
 }
 

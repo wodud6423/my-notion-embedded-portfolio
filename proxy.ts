@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { jwtVerify } from "jose"
 
 const COOKIE_NAME = "admin-token"
-const LOGIN_URL = "/admin/login"
+const PUBLIC_PATHS = ["/admin/login", "/api/admin/login", "/api/admin/logout"]
 
 function getJwtSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET ?? ""
@@ -12,15 +12,15 @@ function getJwtSecret(): Uint8Array {
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
 
-  // /admin/login은 인증 없이 접근 가능
-  if (pathname === LOGIN_URL || pathname.startsWith("/admin/login")) {
+  // 로그인/로그아웃 API 및 로그인 페이지는 인증 없이 접근 가능
+  if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p))) {
     return NextResponse.next()
   }
 
   const token = request.cookies.get(COOKIE_NAME)?.value
 
   if (!token) {
-    const loginUrl = new URL(LOGIN_URL, request.url)
+    const loginUrl = new URL("/admin/login", request.url)
     return NextResponse.redirect(loginUrl)
   }
 
@@ -28,7 +28,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     await jwtVerify(token, getJwtSecret())
     return NextResponse.next()
   } catch {
-    const loginUrl = new URL(LOGIN_URL, request.url)
+    const loginUrl = new URL("/admin/login", request.url)
     return NextResponse.redirect(loginUrl)
   }
 }

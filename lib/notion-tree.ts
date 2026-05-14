@@ -54,18 +54,85 @@ export async function fetchChildPages(
   return pages
 }
 
+// 메인 페이지의 callout 블록 중 BSP 관련 블록 ID를 찾는다
+async function findBspCalloutId(mainPageId: string): Promise<string | null> {
+  const notion = getNotionClient()
+  const resp = await notion.blocks.children.list({ block_id: mainPageId, page_size: 50 })
+
+  const bspKeywords = ["bsp", "개발 관련 연구", "임베디드", "embedded"]
+
+  for (const block of resp.results as BlockObjectResponse[]) {
+    if (block.type === "callout") {
+      const text = block.callout.rich_text?.map((rt: { plain_text?: string }) => rt.plain_text ?? "").join("") ?? ""
+      const lower = text.toLowerCase()
+      if (bspKeywords.some((kw) => lower.includes(kw))) {
+        return block.id
+      }
+    }
+  }
+  return null
+}
+
 // BSP 개발 관련 세부 주제 페이지 목록 수집
-// 반환: { pages: Depth-2 페이지 목록, parentMap: pageId → 부모 제목 }
+// 실제 구조: 메인 페이지 → callout("BSP 개발 관련") → child_page(카테고리) → child_page(세부 주제)
+// 반환: { pages: 세부 주제 페이지 목록, parentMap: pageId → 부모 카테고리 제목 }
 export async function fetchBspSubPages(): Promise<{
   pages: NotionPageMeta[]
   parentMap: Map<string, string>
 }> {
   const mainPageId = getNotionMainPageId()
 
-  // Depth 1: 메인 페이지 직속 하위 페이지들
+  // Step 1: BSP callout 블록 찾기
+  const bspCalloutId = await findBspCalloutId(mainPageId)
+  if (!bspCalloutId) {
+    // fallback: callout 구조가 없으면 메인 페이지 직속 child_page에서 시도
+    return fetchBspSubPagesFallback(mainPageId)
+  }
+
+  // Step 2: callout 하위의 카테고리 페이지들 (child_page) 수집
+  const categoryPages = await fetchChildPages(bspCalloutId, mainPageId, 1)
+
+  if (categoryPages.length === 0) {
+    return fetchBspSubPagesFallback(mainPageId)
+  }
+
+  // Step 3: 각 카테고리 페이지 하위의 세부 주제 페이지들 수집 (분석 단위)
+  // Depth 2 페이지가 인덱스(child_page 자식 보유) 이면 Depth 3을, 아니면 Depth 2 자체를 분석 대상으로 삼음
+  const parentMap = new Map<string, string>()
+  const allSubPages: NotionPageMeta[] = []
+
+  for (const categoryPage of categoryPages) {
+    const depth2Pages = await fetchChildPages(categoryPage.id, categoryPage.id, 2)
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
+    for (const depth2Page of depth2Pages) {
+      const depth3Pages = await fetchChildPages(depth2Page.id, depth2Page.id, 3)
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      if (depth3Pages.length > 0) {
+        // 인덱스 페이지: Depth 3이 실제 분석 대상
+        for (const page of depth3Pages) {
+          parentMap.set(page.id, categoryPage.title)
+        }
+        allSubPages.push(...depth3Pages)
+      } else {
+        // 직접 기술 내용 페이지: Depth 2 자체가 분석 대상
+        parentMap.set(depth2Page.id, categoryPage.title)
+        allSubPages.push(depth2Page)
+      }
+    }
+  }
+
+  return { pages: allSubPages, parentMap }
+}
+
+// fallback: 메인 페이지 직속 child_page 구조 처리 (기존 방식)
+async function fetchBspSubPagesFallback(mainPageId: string): Promise<{
+  pages: NotionPageMeta[]
+  parentMap: Map<string, string>
+}> {
   const depth1Pages = await fetchChildPages(mainPageId, mainPageId, 1)
 
-  // BSP 개발 관련 페이지만 필터링 (임베디드 기술 관련)
   const bspKeywords = ["rtos", "드라이버", "driver", "커널", "kernel", "microcontroller", "임베디드 리눅스", "yocto", "bsp", "embedded"]
   const excludeKeywords = ["코딩", "coding", "ai 툴", "ai tool", "이외", "참고"]
 
@@ -76,7 +143,6 @@ export async function fetchBspSubPages(): Promise<{
     return bspKeywords.some((kw) => lower.includes(kw))
   })
 
-  // Depth 2: 각 BSP 연구 페이지의 세부 주제 페이지들 수집
   const parentMap = new Map<string, string>()
   const allDepth2Pages: NotionPageMeta[] = []
 
@@ -86,15 +152,7 @@ export async function fetchBspSubPages(): Promise<{
       parentMap.set(page.id, depth1Page.title)
     }
     allDepth2Pages.push(...depth2Pages)
-
-    // Notion API 3 RPS 제한 준수 (400ms delay)
-    await new Promise((resolve) => setTimeout(resolve, 400))
-  }
-
-  // parentMap에 inferredCategory도 추가 (LLM 힌트용)
-  const categoryMap = new Map<string, string>()
-  for (const depth1Page of bspDepth1) {
-    categoryMap.set(depth1Page.id, inferCategoryFromTitle(depth1Page.title))
+    await new Promise((resolve) => setTimeout(resolve, 200))
   }
 
   return { pages: allDepth2Pages, parentMap }
