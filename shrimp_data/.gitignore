@@ -2,6 +2,9 @@
 *.tmp
 *.log
 
+# .tech-cache and pdf-meta json
+data/tech-cache.json
+data/pdf-meta.json
 # OS files
 .DS_Store
 Thumbs.db

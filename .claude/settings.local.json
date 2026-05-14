@@ -40,7 +40,11 @@
       "mcp__shrimp-task-manager__split_tasks",
       "mcp__shrimp-task-manager__list_tasks",
       "mcp__shrimp-task-manager__execute_task",
-      "mcp__shrimp-task-manager__verify_task"
+      "mcp__shrimp-task-manager__verify_task",
+      "mcp__notion__notion-fetch",
+      "WebFetch(domain:developers.notion.com)",
+      "Bash(mkdir -p \"C:/Users/wodud/.claude/plans\")",
+      "Read(//c/Users/wodud/.claude/plans/**)"
     ]
   },
   "enableAllProjectMcpServers": true,

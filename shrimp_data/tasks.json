@@ -929,14 +929,15 @@
       "id": "fc680043-945b-4b45-82f5-dc0da95f8241",
       "name": "[Phase 5] Vercel 배포 및 환경변수 등록",
       "description": "Vercel 프로젝트에 NOTION_TOKEN, NOTION_DATABASE_ID, NEXT_PUBLIC_BASE_URL 환경변수 등록. 배포 후 전체 사용자 흐름(홈→카테고리→상세→검색) 검수. .env.local 미노출 확인.",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [
         {
           "taskId": "b55d3bbb-b34e-4377-ad94-3e5751d8f660"
         }
       ],
       "createdAt": "2026-05-07T14:17:58.695Z",
-      "updatedAt": "2026-05-07T14:17:58.695Z",
+      "updatedAt": "2026-05-12T00:00:00.000Z",
+      "completedAt": "2026-05-12T00:00:00.000Z",
       "relatedFiles": [
         {
           "path": ".env.example",
@@ -951,7 +952,314 @@
       ],
       "implementationGuide": "Vercel Dashboard → Settings → Environment Variables에 3개 변수 등록. 배포 후 Production URL에서 전체 흐름 수동 테스트. git log에서 .env.local 미포함 확인.",
       "verificationCriteria": "Vercel Production URL에서 홈→카테고리→상세→검색 전 흐름 정상. FCP 2초 이내. .env.local git 미포함.",
-      "analysisResult": "Phase 5 최적화 및 배포 — 미시작 상태. Phase 3+4 완료 후 진행."
+      "analysisResult": "Phase 5 최적화 및 배포 — 미시작 상태. Phase 3+4 완료 후 진행.",
+      "summary": "Vercel 프로젝트에 NOTION_TOKEN, NOTION_DATABASE_ID, NEXT_PUBLIC_BASE_URL 3개 환경변수 등록 완료. 배포 후 홈→카테고리→상세→검색 전체 사용자 흐름 정상 동작 확인. .env.local git 미포함 확인. 전체 5개 Phase MVP 완료."
+    },
+    {
+      "id": "11957ae1-c700-4e64-b444-4179c8162d3d",
+      "name": "[Phase 5] Notion 페이지 트리 탐색 및 텍스트 추출 구현",
+      "description": "BSP 연구 페이지 하위 세부 주제 페이지를 재귀 탐색하는 notion-tree.ts와 페이지 블록을 텍스트로 추출하는 notion-page-reader.ts 구현. Notion API 3 RPS 제한 준수를 위해 400ms delay 적용.",
+      "status": "completed",
+      "dependencies": [],
+      "createdAt": "2026-05-13T10:19:25.788Z",
+      "updatedAt": "2026-05-13T10:21:50.862Z",
+      "relatedFiles": [
+        {
+          "path": "lib/notion-tree.ts",
+          "type": "CREATE",
+          "description": "BSP 페이지 트리 재귀 탐색"
+        },
+        {
+          "path": "lib/notion-page-reader.ts",
+          "type": "CREATE",
+          "description": "블록 텍스트 추출 (최대 2000자)"
+        },
+        {
+          "path": "lib/notion.ts",
+          "type": "TO_MODIFY",
+          "description": "getNotionDatabaseId 제거, getNotionMainPageId 추가"
+        }
+      ],
+      "implementationGuide": "lib/notion-tree.ts: fetchChildPages(), fetchBspSubPages() 구현. BSP 키워드 필터링으로 코딩 테스트/AI 툴 페이지 제외. parentMap 생성.\nlib/notion-page-reader.ts: fetchPageBlocks() 페이지네이션 지원, extractTextFromBlocks() 2000자 truncate.",
+      "verificationCriteria": "fetchBspSubPages() 호출 시 RTOS/드라이버/커널/Yocto 하위 페이지 목록 반환. 코딩 테스트·AI 툴 페이지 제외 확인.",
+      "analysisResult": "embedded-portfolio 프로젝트 MVP → 프로덕션 확장 구현 완료. Notion 페이지 트리 탐색 + Claude API LLM 분석 + Vercel Blob 캐시 + 관리자 인증 + 기술 스택 차트 + 이력서 다운로드 + API 캐시 전환 (Phase 5~9). 모든 태스크는 이미 구현 완료 상태(completed)로 등록.",
+      "summary": "lib/notion-tree.ts 구현 완료. fetchChildPages()는 블록 페이지네이션 지원, fetchBspSubPages()는 BSP 키워드 필터링으로 코딩 테스트/AI 툴 페이지 제외, parentMap 생성. lib/notion-page-reader.ts의 extractTextFromBlocks()는 2000자 truncate 적용. Notion API 400ms delay로 3 RPS 준수. getNotionMainPageId()로 메인 페이지 ID 참조.",
+      "completedAt": "2026-05-13T10:21:50.842Z"
+    },
+    {
+      "id": "40814ef7-39a2-4bef-bc29-76e126790dce",
+      "name": "[Phase 5] Vercel Blob 기반 tech-cache 및 pdf-meta 구현",
+      "description": "LLM 분석 결과를 Vercel Blob에 저장/조회하는 tech-cache.ts와 PDF 메타데이터를 관리하는 pdf-meta.ts 구현. 로컬 data/*.json 방식 대신 Vercel Blob 사용 (서버리스 환경 파일 쓰기 불가).",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "11957ae1-c700-4e64-b444-4179c8162d3d"
+        }
+      ],
+      "createdAt": "2026-05-13T10:19:25.788Z",
+      "updatedAt": "2026-05-13T10:22:09.577Z",
+      "relatedFiles": [
+        {
+          "path": "lib/tech-cache.ts",
+          "type": "CREATE",
+          "description": "Vercel Blob 기반 기술 스택 캐시"
+        },
+        {
+          "path": "lib/pdf-meta.ts",
+          "type": "CREATE",
+          "description": "Vercel Blob 기반 PDF 메타 관리"
+        },
+        {
+          "path": "types/index.ts",
+          "type": "TO_MODIFY",
+          "description": "CachedTechStack, TechCacheFile, NotionPageMeta, AdminAnalyzeResponse, PdfFileMeta 타입 추가"
+        }
+      ],
+      "implementationGuide": "lib/tech-cache.ts: put(pathname, json, {addRandomSuffix: false}) + list()로 URL 조회. readTechCache(), writeTechCache(), getTechCacheItems(), getTechCacheUpdatedAt() 구현.\nlib/pdf-meta.ts: 동일 패턴. readPdfMeta(), writePdfMeta(), updatePdfMeta(), getPdfUrl() 구현.",
+      "verificationCriteria": "writeTechCache() 호출 후 Vercel Blob에 tech-cache.json 저장. readTechCache()로 동일 데이터 반환.",
+      "analysisResult": "embedded-portfolio 프로젝트 MVP → 프로덕션 확장 구현 완료. Notion 페이지 트리 탐색 + Claude API LLM 분석 + Vercel Blob 캐시 + 관리자 인증 + 기술 스택 차트 + 이력서 다운로드 + API 캐시 전환 (Phase 5~9). 모든 태스크는 이미 구현 완료 상태(completed)로 등록.",
+      "summary": "lib/tech-cache.ts 및 lib/pdf-meta.ts 구현 완료. Vercel Blob put(pathname, json, {addRandomSuffix: false}) + list()로 URL 조회. readTechCache/writeTechCache/getTechCacheItems/getTechCacheUpdatedAt, readPdfMeta/writePdfMeta/updatePdfMeta/getPdfUrl 구현. types/index.ts에 CachedTechStack, TechCacheFile, NotionPageMeta, AdminAnalyzeResponse, PdfFileMeta 타입 추가.",
+      "completedAt": "2026-05-13T10:22:09.563Z"
+    },
+    {
+      "id": "0833744f-0948-4e1a-874e-5b484993849d",
+      "name": "[Phase 6] Claude API LLM 분석 엔진 구현",
+      "description": "claude-sonnet-4-6 모델로 Notion 세부 주제 페이지를 분석해 TechStack JSON을 추출하는 llm-analyzer.ts 구현. 순차 처리(400ms delay), 실패 페이지 건너뜀, 50자 변경 요약 생성.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "40814ef7-39a2-4bef-bc29-76e126790dce"
+        }
+      ],
+      "createdAt": "2026-05-13T10:19:25.788Z",
+      "updatedAt": "2026-05-13T10:22:31.822Z",
+      "relatedFiles": [
+        {
+          "path": "lib/llm-analyzer.ts",
+          "type": "CREATE",
+          "description": "Claude API claude-sonnet-4-6 분석 엔진"
+        },
+        {
+          "path": "app/api/admin/analyze/route.ts",
+          "type": "CREATE",
+          "description": "POST /api/admin/analyze (force-dynamic, maxDuration: 300)"
+        }
+      ],
+      "implementationGuide": "lib/llm-analyzer.ts: analyzePage() 단일 페이지 분석 → CachedTechStack | null 반환.\nanalyzeAllPages() 순차 처리, 페이지당 400ms delay.\ngenerateChangeSummary() 추가/제거 수 계산 후 50자 이내 반환.\n시스템 프롬프트: JSON 또는 null만 반환, 마크다운 코드블록 금지.",
+      "verificationCriteria": "analyzePage() 호출 시 TechStack JSON 반환 또는 null(목차 페이지). generateChangeSummary() 50자 이내 문자열 반환.",
+      "analysisResult": "embedded-portfolio 프로젝트 MVP → 프로덕션 확장 구현 완료. Notion 페이지 트리 탐색 + Claude API LLM 분석 + Vercel Blob 캐시 + 관리자 인증 + 기술 스택 차트 + 이력서 다운로드 + API 캐시 전환 (Phase 5~9). 모든 태스크는 이미 구현 완료 상태(completed)로 등록.",
+      "summary": "lib/llm-analyzer.ts 구현 완료. claude-sonnet-4-6으로 analyzePage() 단일 분석(JSON 또는 null), analyzeAllPages() 순차 처리(400ms delay), generateChangeSummary() 50자 이내 반환. 카테고리/난이도 유효성 검증 및 폴백 처리 포함. app/api/admin/analyze/route.ts는 force-dynamic, maxDuration: 300 설정으로 장시간 분석 지원.",
+      "completedAt": "2026-05-13T10:22:31.816Z"
+    },
+    {
+      "id": "9c419be2-6464-4cad-9a5b-8246edd51453",
+      "name": "[Phase 7] JWT 인증 및 proxy.ts 경로 보호 구현",
+      "description": "jose 기반 JWT 인증(lib/auth.ts)과 Next.js 16 proxy.ts로 /admin/** 경로 보호 구현. middleware.ts는 Next.js 16에서 proxy.ts로 컨벤션 변경됨.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "0833744f-0948-4e1a-874e-5b484993849d"
+        }
+      ],
+      "createdAt": "2026-05-13T10:19:58.276Z",
+      "updatedAt": "2026-05-13T10:22:50.155Z",
+      "relatedFiles": [
+        {
+          "path": "lib/auth.ts",
+          "type": "CREATE",
+          "description": "jose JWT 인증 유틸리티"
+        },
+        {
+          "path": "proxy.ts",
+          "type": "CREATE",
+          "description": "Next.js 16 proxy 컨벤션 경로 보호"
+        }
+      ],
+      "implementationGuide": "lib/auth.ts: signAdminToken() HS256 24시간, verifyAdminToken(), getAdminPassword().\nproxy.ts: /admin/login 제외, /admin/** 및 /api/admin/** JWT 검증. 미인증 시 /admin/login 리다이렉트.\nexport const config = { matcher: ['/admin/:path*', '/api/admin/:path*'] }",
+      "verificationCriteria": "/admin 미인증 접근 시 /admin/login 307 리다이렉트. 유효 JWT 쿠키 보유 시 /admin 200 응답.",
+      "analysisResult": "embedded-portfolio 프로덕션 확장 - 관리자 인증 및 페이지 구현 완료 태스크 등록.",
+      "summary": "lib/auth.ts(jose HS256 24시간 JWT, signAdminToken/verifyAdminToken/getAdminPassword)와 proxy.ts(Next.js 16 컨벤션, /admin/login 제외, /admin/** 및 /api/admin/** JWT 검증, 미인증 시 307 리다이렉트) 구현 완료. SameSite=Strict HttpOnly 쿠키 설정 적용.",
+      "completedAt": "2026-05-13T10:22:50.145Z"
+    },
+    {
+      "id": "916f0850-d22a-4eec-9c96-780fea6ca7ba",
+      "name": "[Phase 7] 관리자 API Route 구현 (로그인/로그아웃/코멘트/PDF 업로드)",
+      "description": "관리자 전용 4개 API Route 구현: 비밀번호 인증→JWT 쿠키 발급, 쿠키 만료, Notion 코멘트 전송, Vercel Blob PDF 업로드.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "9c419be2-6464-4cad-9a5b-8246edd51453"
+        }
+      ],
+      "createdAt": "2026-05-13T10:19:58.276Z",
+      "updatedAt": "2026-05-13T10:23:08.451Z",
+      "relatedFiles": [
+        {
+          "path": "app/api/admin/login/route.ts",
+          "type": "CREATE",
+          "description": "JWT 쿠키 발급"
+        },
+        {
+          "path": "app/api/admin/logout/route.ts",
+          "type": "CREATE",
+          "description": "쿠키 만료"
+        },
+        {
+          "path": "app/api/admin/comment/route.ts",
+          "type": "CREATE",
+          "description": "Notion 코멘트 전송"
+        },
+        {
+          "path": "app/api/admin/upload-pdf/route.ts",
+          "type": "CREATE",
+          "description": "Vercel Blob PDF 업로드"
+        }
+      ],
+      "implementationGuide": "app/api/admin/login/route.ts: POST, password 검증, HttpOnly SameSite=Strict 쿠키.\napp/api/admin/logout/route.ts: POST, maxAge=0 쿠키 만료.\napp/api/admin/comment/route.ts: notion.comments.create().\napp/api/admin/upload-pdf/route.ts: @vercel/blob put(), updatePdfMeta() 호출.",
+      "verificationCriteria": "POST /api/admin/login 성공 시 Set-Cookie 헤더 반환. POST /api/admin/comment 후 Notion 페이지에 코멘트 등록.",
+      "analysisResult": "embedded-portfolio 프로덕션 확장 - 관리자 인증 및 페이지 구현 완료 태스크 등록.",
+      "summary": "관리자 API Route 4개 구현 완료. login(HttpOnly SameSite=Strict 쿠키 발급, 24시간), logout(maxAge=0 만료), comment(notion.comments.create()), upload-pdf(Vercel Blob put() + updatePdfMeta(), PDF MIME 타입 검증). 모두 force-dynamic 적용.",
+      "completedAt": "2026-05-13T10:23:08.443Z"
+    },
+    {
+      "id": "fd98b710-d1e7-4cea-8f4e-83281058a871",
+      "name": "[Phase 7] 관리자 페이지 및 UI 컴포넌트 구현",
+      "description": "관리자 로그인 폼, 레이아웃, 메인 페이지 및 4개 관리자 UI 컴포넌트(분석 버튼, 피드백 다이얼로그, 기술 테이블, PDF 업로드 카드) 구현.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "916f0850-d22a-4eec-9c96-780fea6ca7ba"
+        }
+      ],
+      "createdAt": "2026-05-13T10:19:58.276Z",
+      "updatedAt": "2026-05-13T10:23:28.440Z",
+      "relatedFiles": [
+        {
+          "path": "app/admin/login/page.tsx",
+          "type": "CREATE",
+          "description": "비밀번호 로그인 폼"
+        },
+        {
+          "path": "app/admin/layout.tsx",
+          "type": "CREATE",
+          "description": "관리자 레이아웃"
+        },
+        {
+          "path": "app/admin/page.tsx",
+          "type": "CREATE",
+          "description": "관리자 메인 페이지"
+        },
+        {
+          "path": "components/admin/analyze-button.tsx",
+          "type": "CREATE",
+          "description": "LLM 분석 트리거 버튼"
+        },
+        {
+          "path": "components/admin/feedback-dialog.tsx",
+          "type": "CREATE",
+          "description": "Notion 피드백 다이얼로그"
+        },
+        {
+          "path": "components/admin/tech-table.tsx",
+          "type": "CREATE",
+          "description": "기술 스택 관리 테이블"
+        },
+        {
+          "path": "components/admin/pdf-upload-card.tsx",
+          "type": "CREATE",
+          "description": "PDF 업로드 카드"
+        }
+      ],
+      "implementationGuide": "app/admin/login/page.tsx: react-hook-form + zod 로그인 폼.\napp/admin/layout.tsx: 로그아웃 버튼 포함 레이아웃.\napp/admin/page.tsx: 서버 컴포넌트, 캐시 상태+분석 트리거+기술 테이블+PDF 관리.\ncomponents/admin/analyze-button.tsx: 스피너+완료 Dialog.\ncomponents/admin/feedback-dialog.tsx: textarea + POST /api/admin/comment.\ncomponents/admin/tech-table.tsx: Notion 링크+피드백 버튼.\ncomponents/admin/pdf-upload-card.tsx: file input + POST /api/admin/upload-pdf.",
+      "verificationCriteria": "/admin/login 폼 제출 후 /admin 이동. 분석 버튼 클릭 후 스피너→완료 Dialog 표시. 기술 테이블 Notion 링크 동작.",
+      "analysisResult": "embedded-portfolio 프로덕션 확장 - 관리자 인증 및 페이지 구현 완료 태스크 등록.",
+      "summary": "관리자 페이지 및 UI 컴포넌트 7개 구현 완료. login/page.tsx(react-hook-form+zod), layout.tsx(로그아웃 버튼), page.tsx(서버 컴포넌트, 캐시 상태+분석+테이블+PDF 섹션). analyze-button(스피너+완료 Dialog+router.refresh), feedback-dialog(textarea+Notion 코멘트 전송), tech-table(Notion 링크+피드백 버튼+별점), pdf-upload-card(file input+FormData 업로드) 구현.",
+      "completedAt": "2026-05-13T10:23:28.431Z"
+    },
+    {
+      "id": "78cbd3a3-3364-4792-8e31-5042da9cd11e",
+      "name": "[Phase 8] 기술 스택 분포 차트 및 이력서 다운로드 페이지 구현",
+      "description": "recharts 기반 카테고리별/난이도별 기술 분포 막대 차트와 이력서·포트폴리오 PDF 다운로드 공개 페이지 구현. 홈 페이지에 업데이트 날짜 표기 및 차트 섹션 추가.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "fd98b710-d1e7-4cea-8f4e-83281058a871"
+        }
+      ],
+      "createdAt": "2026-05-13T10:20:26.227Z",
+      "updatedAt": "2026-05-13T10:23:47.990Z",
+      "relatedFiles": [
+        {
+          "path": "components/charts/tech-distribution-chart.tsx",
+          "type": "CREATE",
+          "description": "recharts 분포 차트"
+        },
+        {
+          "path": "app/resume/page.tsx",
+          "type": "CREATE",
+          "description": "PDF 다운로드 페이지"
+        },
+        {
+          "path": "app/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "업데이트 날짜 + 차트 섹션 추가"
+        },
+        {
+          "path": "lib/constants.ts",
+          "type": "TO_MODIFY",
+          "description": "Resume navItem 추가"
+        }
+      ],
+      "implementationGuide": "components/charts/tech-distribution-chart.tsx: 'use client', ResponsiveContainer+BarChart. 카테고리별(Kernel/Driver/RTOS/Yocto/Other) + 난이도별(초급/중급/고급) 2개 차트.\napp/resume/page.tsx: readPdfMeta()로 파일 정보 조회. 미업로드 시 비활성화 버튼.\napp/page.tsx: getTechCacheUpdatedAt() 호출, 업데이트 날짜 표기, 차트 섹션 추가.\nlib/constants.ts: Resume navItem 추가.",
+      "verificationCriteria": "홈 페이지 하단 카테고리별/난이도별 차트 렌더링. /resume 접근 시 PDF 카드 표시, 미업로드 시 비활성화.",
+      "analysisResult": "embedded-portfolio 프로덕션 확장 - 차트/이력서/API 전환 완료 태스크 등록.",
+      "summary": "tech-distribution-chart.tsx(recharts, 카테고리별/난이도별 2개 BarChart, Cell로 개별 색상), resume/page.tsx(readPdfMeta(), 미업로드 시 비활성화 버튼), app/page.tsx(getTechCacheUpdatedAt() 업데이트 날짜 + 차트 섹션), lib/constants.ts(Resume navItem) 구현 완료.",
+      "completedAt": "2026-05-13T10:23:47.976Z"
+    },
+    {
+      "id": "d4ceff05-1377-4430-8a29-a6ef6943afe4",
+      "name": "[Phase 9] 기존 API Route를 Vercel Blob 캐시 기반으로 전환",
+      "description": "기존 Notion DB 직접 조회 방식의 3개 API Route와 카테고리 페이지를 Vercel Blob 캐시 기반으로 교체. 응답 스키마(TechListResponse, SearchResponse) 동일 유지. next.config.ts에 Vercel Blob URL remotePatterns 추가.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "78cbd3a3-3364-4792-8e31-5042da9cd11e"
+        }
+      ],
+      "createdAt": "2026-05-13T10:20:26.227Z",
+      "updatedAt": "2026-05-13T10:24:07.820Z",
+      "relatedFiles": [
+        {
+          "path": "app/api/tech/route.ts",
+          "type": "TO_MODIFY",
+          "description": "캐시 기반 메모리 필터링"
+        },
+        {
+          "path": "app/api/tech/search/route.ts",
+          "type": "TO_MODIFY",
+          "description": "캐시 기반 텍스트 검색"
+        },
+        {
+          "path": "app/api/tech/[id]/route.ts",
+          "type": "TO_MODIFY",
+          "description": "캐시 메타 + Notion 블록 실시간"
+        },
+        {
+          "path": "app/category/[category]/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "캐시 기반 전환"
+        },
+        {
+          "path": "next.config.ts",
+          "type": "TO_MODIFY",
+          "description": "Vercel Blob remotePatterns"
+        }
+      ],
+      "implementationGuide": "app/api/tech/route.ts: getTechCacheItems() + 메모리 필터링(category/tags/difficulty), importance 내림차순 정렬.\napp/api/tech/search/route.ts: getTechCacheItems() + toLowerCase 텍스트 검색(title/summary/tags).\napp/api/tech/[id]/route.ts: 캐시에서 meta 조회 + Notion 실시간 블록 조회. 404 처리.\napp/category/[category]/page.tsx: getTechCacheItems() 필터링으로 교체.\nnext.config.ts: *.public.blob.vercel-storage.com remotePatterns 추가.",
+      "verificationCriteria": "GET /api/tech 200 응답, 캐시 데이터 반환. GET /api/tech/[id] 캐시에 없는 id → 404. 빌드 에러 없음.",
+      "analysisResult": "embedded-portfolio 프로덕션 확장 - 차트/이력서/API 전환 완료 태스크 등록.",
+      "summary": "API Route 3개와 카테고리 페이지를 Vercel Blob 캐시 기반으로 전환 완료. /api/tech(메모리 필터링+importance 정렬), /api/tech/search(toLowerCase 텍스트 검색 title/summary/tags), /api/tech/[id](캐시 메타+Notion 블록 실시간, 404 처리), category/[category](캐시 필터링). next.config.ts에 *.public.blob.vercel-storage.com remotePatterns 추가. npm run build 성공 확인.",
+      "completedAt": "2026-05-13T10:24:07.815Z"
     }
   ]
 }
